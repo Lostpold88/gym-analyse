@@ -1,0 +1,12 @@
+# Temporäre Render-/Prüfkopien
+_render_check.html
+verify-render.html
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Betriebssystem
+Thumbs.db
+desktop.ini
+.DS_Store
