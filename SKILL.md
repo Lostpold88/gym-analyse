@@ -27,6 +27,45 @@ neuer Export lässt sich auch per Drag & Drop auf die geöffnete Seite ziehen.
 **Änderung am Dashboard** → siehe `AGENTS.md`. Kurz: nie die generierte
 `gym-analyse.html` editieren, sondern `dashboard_template.html`.
 
+## Neue Einträge nachziehen
+
+FitNotes exportiert **immer die vollständige Historie**, nie nur das Neue. Der
+frische Export *ersetzt* `FitNotesWorkouts.csv` komplett — niemals anhängen,
+sonst stehen alle alten Sätze doppelt in der Auswertung.
+
+```bash
+# 1. Neuen Export aus FitNotes über FitNotesWorkouts.csv kopieren, dann:
+python check_export.py       # prüft, ob der Export plausibel ist
+python build_dashboard.py    # baut gym-analyse.html neu
+```
+
+Danach `FitNotesWorkouts.csv` **und** `gym-analyse.html` committen — die
+generierte Seite enthält die Daten eingebettet und ist sonst veraltet.
+
+Für einen schnellen Blick ohne Rebuild reicht Drag & Drop der neuen CSV auf die
+bereits geöffnete Seite.
+
+### Die zwei Fehler, die dabei still danebengehen
+
+`check_export.py` vergleicht gegen den zuletzt committeten Stand und fängt genau
+diese beiden ab (Exit 1 = nicht committen):
+
+- **Zeitlich gefilterter Export.** Wer im Export-Dialog einen Datumsbereich
+  stehen lässt, bekommt eine Datei, die nur *neuer* aussieht, in Wahrheit aber
+  Historie verliert. Das Dashboard zeigt dann klaglos weniger Daten. Die Prüfung
+  meldet, welche Trainingstage aus dem alten Stand fehlen.
+- **Neuer Workout-Name ohne Zuordnung.** Ein frischer Split landet unbemerkt
+  unter „Sonstige" und fehlt in der Programm-Auswertung. Die Prüfung listet alle
+  Namen auf, die nicht in `PROGRAMS` stehen.
+
+Zusätzlich werden neue Übungen genannt — die brauchen keine Konfiguration und
+tauchen automatisch auf, die Meldung dient nur der Kontrolle.
+
+Ein Sonderfall bleibt Handarbeit: **umbenannte Übungen.** FitNotes führt sie als
+neue Übung, die Historie unter dem alten Namen bricht ab. Die Prüfung meldet das
+als „neue Übung"; ob dahinter wirklich eine neue Übung oder nur ein neuer Name
+steckt, muss man selbst entscheiden.
+
 ## CSV korrekt einlesen
 
 Vier Fallen, die stillschweigend falsche Ergebnisse liefern:

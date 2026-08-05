@@ -22,6 +22,19 @@ Ein neuer Export lässt sich auch **direkt im Browser per Drag & Drop** auf die
 geöffnete Seite ziehen — dafür ist kein erneuter Build nötig. Es ist derselbe
 Parser-Pfad, die Seite wertet die Datei lokal aus; nichts wird hochgeladen.
 
+### Neuen Export übernehmen
+
+FitNotes exportiert stets die vollständige Historie; die neue Datei *ersetzt*
+`FitNotesWorkouts.csv`, sie wird nicht angehängt. Vor dem Übernehmen prüfen:
+
+```bash
+python check_export.py
+```
+
+Meldet, ob der Export versehentlich zeitlich gefiltert war (dann fehlt Historie)
+und ob neue Workout-Namen ohne Zuordnung unter „Sonstige" landen würden. Exit 1
+heißt: nicht committen.
+
 ## Was die Seite zeigt
 
 | Tab | Inhalt |
@@ -70,6 +83,7 @@ unter „Sonstige" — es geht nie ein Datensatz verloren.
 |---|---|
 | `dashboard_template.html` | Vorlage mit sämtlicher Logik: CSV-Parser, Aggregation, Diagramme (handgeschriebenes SVG, keine Bibliothek). Hier wird entwickelt. |
 | `build_dashboard.py` | Bettet den CSV-Export in die Vorlage ein und schreibt die fertige Seite. Ohne Fremdpakete. |
+| `check_export.py` | Prüft einen neuen Export gegen den committeten Stand, bevor er übernommen wird. |
 | `FitNotesWorkouts.csv` | Der Rohexport aus FitNotes. |
 | `gym-analyse.html` | Generiert. Das ist die Datei, die man öffnet. |
 

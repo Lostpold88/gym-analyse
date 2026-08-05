@@ -20,6 +20,7 @@ nächsten Build ersatzlos.
 |---|---|
 | `dashboard_template.html` | **Die gesamte Logik.** CSV-Parser, Aggregation, Diagramme, Interaktion, Styling. Enthält die Platzhalter `__CSV_DATA__` und `__BUILD_INFO__`. |
 | `build_dashboard.py` | Ersetzt die beiden Platzhalter und schreibt die Ausgabe. Sonst nichts. Keine Fremdpakete, keine Auswertungslogik. |
+| `check_export.py` | Prüft einen neuen CSV-Export gegen `HEAD`, bevor er übernommen wird. Liest die Splitnamen per Regex aus `PROGRAMS` — wer die Struktur dieses Blocks ändert, muss das Regex mitziehen. |
 | `FitNotesWorkouts.csv` | Rohexport aus FitNotes. Persönliche Gesundheitsdaten — nicht in öffentliche Kontexte kopieren. |
 | `gym-analyse.html` | Generiert. |
 
