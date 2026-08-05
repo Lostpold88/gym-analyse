@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Bittet den Browser, beim Aufruf gegen den Server zu prüfen. GitHub Pages
+     liefert die Seite mit eigenem Cache-Header aus; nach einem Update kann
+     eine alte Fassung sonst noch eine Weile aus dem Browsercache kommen.
+     Welche Fassung geladen ist, steht als Datum am Fuß der Seite. -->
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <title>Gym Progress — FitNotes Analyse</title>
 <style>
 /* ─────────────────────────────────────────────────────────────
@@ -201,8 +206,15 @@ nav.tabs button:hover { background: var(--hover-wash); }
   .combo { flex: 1 1 auto; min-width: 0; max-width: none; }
   .combo-list { left: 0; right: 0; width: auto; max-width: none; }
 }
-.combo-opt.active { background: var(--hover-wash); }
-.combo-opt[aria-selected="true"] { background: var(--series-1); color: #fff; font-weight: 600; }
+.combo-opt:hover, .combo-opt.active { background: var(--hover-wash); }
+/* Der ausgewählte Eintrag behält Blau und weiße Schrift — auch unter der Maus.
+   Ohne diese Regel überschriebe der Hover-Wash das Blau und die weiße Schrift
+   stünde auf hellem Grund. Die Rückmeldung kommt stattdessen über die Helligkeit. */
+.combo-opt[aria-selected="true"],
+.combo-opt[aria-selected="true"]:hover,
+.combo-opt[aria-selected="true"].active { background: var(--series-1); color: #fff; font-weight: 600; }
+.combo-opt[aria-selected="true"]:hover,
+.combo-opt[aria-selected="true"].active { filter: brightness(1.12); }
 .combo-opt .cnt { color: var(--text-secondary); font-size: 12.5px; font-variant-numeric: tabular-nums; flex: none; }
 .combo-opt[aria-selected="true"] .cnt { color: rgba(255, 255, 255, .82); }
 
