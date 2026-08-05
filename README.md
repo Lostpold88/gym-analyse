@@ -2,10 +2,10 @@
 
 **→ [Live ansehen](https://lostpold88.github.io/gym-analyse/)**
 
-Interaktives Dashboard zur Auswertung von Trainingslogs aus der App
-[FitNotes](https://www.fitnotesapp.com/). Aus einem CSV-Export entsteht eine
-**einzelne, eigenständige HTML-Datei**: keine externen Abhängigkeiten, kein
-Server, kein CDN. Doppelklick genügt, sie läuft auch offline.
+Interaktives Dashboard zur Auswertung von Trainingslogs aus der App FitNotes.
+Aus einem CSV-Export entsteht eine **einzelne, eigenständige HTML-Datei**:
+keine externen Abhängigkeiten, kein Server, kein CDN. Doppelklick genügt, sie
+läuft auch offline.
 
 Ausgewertet wird derzeit ausschließlich das Programm **PPL/UL** (Push, Pull,
 Legs, Upper, Lower). Siehe [Auswertung auf ein Programm beschränken](#auswertung-auf-ein-programm-beschränken).
