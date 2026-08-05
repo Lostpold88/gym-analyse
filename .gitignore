@@ -1,5 +1,5 @@
 # Temporäre Render-/Prüfkopien
-_render_check.html
+_render_check*.html
 verify-render.html
 
 # Python

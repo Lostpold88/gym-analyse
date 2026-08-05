@@ -162,6 +162,50 @@ nav.tabs button:hover { background: var(--hover-wash); }
 .seg button + button { border-left: 1px solid var(--border); }
 .seg button[aria-pressed="true"] { background: var(--hover-wash); color: var(--text-primary); font-weight: 600; }
 
+/* ── Auswahlliste ─────────────────────────────────────────
+   Ersetzt <select>: dessen Aufklappliste zeichnet das Betriebssystem,
+   die lässt sich weder zuverlässig einfärben noch prüfen — Text stand
+   dort weiß auf weiß. Diese Liste gehört zur Seite und folgt den Tokens. */
+.combo { position: relative; min-width: 220px; max-width: min(420px, 72vw); }
+.combo-btn {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  justify-content: space-between; text-align: left;
+}
+.combo-btn > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.combo-caret { color: var(--text-muted); font-size: 11px; flex: none; }
+/* Rechts verankert: der Auswahlknopf sitzt am rechten Rand der Karte,
+   nach links aufklappen hält die Liste im Sichtfeld. */
+.combo-list {
+  position: absolute; z-index: 40; top: calc(100% + 5px); right: 0; left: auto;
+  min-width: 100%; width: max-content; max-width: min(420px, 84vw);
+  max-height: min(340px, 60vh); overflow-y: auto; overflow-x: hidden;
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 10px; padding: 4px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .28);
+}
+.combo-opt {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
+  padding: 7px 10px; border-radius: 7px; cursor: pointer;
+  font-size: 13.5px; color: var(--text-primary); white-space: nowrap;
+}
+.combo-opt > span:first-child { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+/* min-width:0 an jedem Glied der Kette — sonst sperrt das voreingestellte
+   min-width:auto eines Flex-Elements das Schrumpfen unter seine Inhaltsbreite
+   und der lange Übungsname drückt die Karte auf. */
+.ex-picker { display: flex; align-items: center; gap: 8px; min-width: 0; }
+/* Schmale Schirme: die Auswahl nimmt die volle Kartenbreite ein, dann deckt
+   sich die Liste exakt mit ihr und kann seitlich nicht herausragen. Die
+   Pfeiltasten bleiben durch den gemeinsamen Container daneben. */
+@media (max-width: 560px) {
+  .ex-picker { flex: 1 1 100%; }
+  .combo { flex: 1 1 auto; min-width: 0; max-width: none; }
+  .combo-list { left: 0; right: 0; width: auto; max-width: none; }
+}
+.combo-opt.active { background: var(--hover-wash); }
+.combo-opt[aria-selected="true"] { background: var(--series-1); color: #fff; font-weight: 600; }
+.combo-opt .cnt { color: var(--text-secondary); font-size: 12.5px; font-variant-numeric: tabular-nums; flex: none; }
+.combo-opt[aria-selected="true"] .cnt { color: rgba(255, 255, 255, .82); }
+
 /* ── stat tiles ───────────────────────────────────────── */
 .hero { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
 .hero .val { font-size: 52px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.05; }
@@ -395,9 +439,16 @@ td .swatch { width: 9px; height: 9px; border-radius: 2px; display: inline-block;
             <p class="note">Sortiert nach Anzahl Sätze im gewählten Zeitraum.</p>
           </div>
           <div class="spacer"></div>
-          <button id="ex-prev" aria-label="Vorherige Übung">◀</button>
-          <select id="ex-select" aria-label="Übung" style="max-width:min(420px,72vw)"></select>
-          <button id="ex-next" aria-label="Nächste Übung">▶</button>
+          <div class="ex-picker">
+            <button id="ex-prev" aria-label="Vorherige Übung">◀</button>
+            <div class="combo" id="ex-combo">
+              <button class="combo-btn" id="ex-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Übung auswählen">
+                <span id="ex-btn-label">—</span><span class="combo-caret" aria-hidden="true">▾</span>
+              </button>
+              <div class="combo-list" id="ex-list" role="listbox" aria-label="Übungen" hidden></div>
+            </div>
+            <button id="ex-next" aria-label="Nächste Übung">▶</button>
+          </div>
         </div>
         <div class="tiles" id="ex-tiles"></div>
       </div>
@@ -1688,15 +1739,23 @@ function renderExercises(ss) {
   const counts = new Map();
   for (const s of setsOf(ss)) counts.set(s.exercise, (counts.get(s.exercise) || 0) + 1);
   const names = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "de")).map(e => e[0]);
-  const sel = document.getElementById("ex-select");
-  sel.textContent = "";
-  names.forEach(n => {
-    const o = el("option", null, n + "  (" + counts.get(n) + " Sätze)");
-    o.value = n; sel.appendChild(o);
-  });
-  if (!names.length) { sel.appendChild(el("option", null, "—")); }
   if (!state.exercise || !names.includes(state.exercise)) state.exercise = names[0] || null;
-  sel.value = state.exercise || "";
+  exNames = names;
+  const list = document.getElementById("ex-list");
+  list.textContent = "";
+  names.forEach(n => {
+    const o = el("div", "combo-opt");
+    o.setAttribute("role", "option");
+    o.setAttribute("aria-selected", String(n === state.exercise));
+    o.dataset.value = n;
+    o.appendChild(el("span", null, n));
+    o.appendChild(el("span", "cnt", counts.get(n) + " Sätze"));
+    o.addEventListener("click", () => { state.exercise = n; closeCombo(); render(); });
+    list.appendChild(o);
+  });
+  document.getElementById("ex-btn-label").textContent = state.exercise
+    ? state.exercise + "  (" + counts.get(state.exercise) + " Sätze)" : "—";
+  document.getElementById("ex-btn").disabled = !names.length;
 
   const host = { tiles: document.getElementById("ex-tiles") };
   host.tiles.textContent = "";
@@ -2169,12 +2228,62 @@ document.addEventListener("click", ev => {
   applyTableModes();
 });
 
-document.getElementById("ex-select").addEventListener("change", e => { state.exercise = e.target.value; render(); });
+/* ── Auswahlliste der Übungen ── */
+let exNames = [];
+const comboBtn = document.getElementById("ex-btn");
+const comboList = document.getElementById("ex-list");
+
+function closeCombo() {
+  comboList.hidden = true;
+  comboBtn.setAttribute("aria-expanded", "false");
+  comboList.querySelectorAll(".active").forEach(o => o.classList.remove("active"));
+}
+function openCombo() {
+  if (!exNames.length) return;
+  comboList.hidden = false;
+  comboBtn.setAttribute("aria-expanded", "true");
+  const cur = comboList.querySelector('[aria-selected="true"]') || comboList.firstElementChild;
+  if (cur) { cur.classList.add("active"); cur.scrollIntoView({ block: "nearest" }); }
+}
+function moveActive(d) {
+  const opts = [...comboList.children];
+  if (!opts.length) return;
+  const i = opts.findIndex(o => o.classList.contains("active"));
+  const next = opts[Math.max(0, Math.min(opts.length - 1, (i < 0 ? 0 : i + d)))];
+  opts.forEach(o => o.classList.remove("active"));
+  next.classList.add("active");
+  next.scrollIntoView({ block: "nearest" });
+}
+comboBtn.addEventListener("click", () => comboList.hidden ? openCombo() : closeCombo());
+comboBtn.addEventListener("keydown", ev => {
+  if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+    ev.preventDefault();
+    if (comboList.hidden) openCombo(); else moveActive(ev.key === "ArrowDown" ? 1 : -1);
+  } else if (ev.key === "Enter" && !comboList.hidden) {
+    ev.preventDefault();
+    const a = comboList.querySelector(".active");
+    if (a) { state.exercise = a.dataset.value; closeCombo(); render(); comboBtn.focus(); }
+  } else if (ev.key === "Escape" && !comboList.hidden) {
+    ev.preventDefault(); closeCombo();
+  } else if (ev.key.length === 1 && /\S/.test(ev.key)) {
+    /* Sprung zum ersten Treffer mit diesem Anfangsbuchstaben */
+    const k = ev.key.toLowerCase();
+    const hit = [...comboList.children].find(o => o.dataset.value.toLowerCase().startsWith(k));
+    if (hit) {
+      if (comboList.hidden) openCombo();
+      comboList.querySelectorAll(".active").forEach(o => o.classList.remove("active"));
+      hit.classList.add("active"); hit.scrollIntoView({ block: "nearest" });
+    }
+  }
+});
+document.addEventListener("click", ev => {
+  if (!comboList.hidden && !ev.target.closest("#ex-combo")) closeCombo();
+});
+
 const stepEx = d => {
-  const sel = document.getElementById("ex-select");
-  const i = sel.selectedIndex + d;
-  if (i < 0 || i >= sel.options.length) return;
-  sel.selectedIndex = i; state.exercise = sel.value; render();
+  const i = exNames.indexOf(state.exercise) + d;
+  if (i < 0 || i >= exNames.length) return;
+  state.exercise = exNames[i]; render();
 };
 document.getElementById("ex-prev").addEventListener("click", () => stepEx(-1));
 document.getElementById("ex-next").addEventListener("click", () => stepEx(1));
