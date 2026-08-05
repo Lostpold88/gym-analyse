@@ -9,6 +9,9 @@ Die erzeugte Seite ist eine einzelne Datei ohne externe Abhaengigkeiten:
 Doppelklick genuegt, sie laeuft auch offline. Ein neuer Export kann direkt
 im Browser per Drag & Drop geladen werden - dafuer ist kein erneuter Lauf
 dieses Skripts noetig.
+
+Das Ziel heisst index.html, damit GitHub Pages die Seite direkt unter der
+Root-URL des Repos ausliefert.
 """
 
 from __future__ import annotations
@@ -21,7 +24,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 TEMPLATE = HERE / "dashboard_template.html"
 DEFAULT_CSV = HERE / "FitNotesWorkouts.csv"
-DEFAULT_OUT = HERE / "gym-analyse.html"
+DEFAULT_OUT = HERE / "index.html"
 
 
 def js_string(text: str) -> str:

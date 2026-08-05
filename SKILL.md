@@ -21,11 +21,12 @@ präziser als das Dashboard zu durchsuchen.
 python build_dashboard.py
 ```
 
-Erzeugt `gym-analyse.html`, eine eigenständige Seite ohne Abhängigkeiten. Ein
+Erzeugt `index.html`, eine eigenständige Seite ohne Abhängigkeiten. Ein
 neuer Export lässt sich auch per Drag & Drop auf die geöffnete Seite ziehen.
+Die aktuelle Fassung liegt live unter https://lostpold88.github.io/gym-analyse/.
 
 **Änderung am Dashboard** → siehe `AGENTS.md`. Kurz: nie die generierte
-`gym-analyse.html` editieren, sondern `dashboard_template.html`.
+`index.html` editieren, sondern `dashboard_template.html`.
 
 ## Neue Einträge nachziehen
 
@@ -39,8 +40,9 @@ python check_export.py       # prüft, ob der Export plausibel ist
 python build_dashboard.py    # baut gym-analyse.html neu
 ```
 
-Danach `FitNotesWorkouts.csv` **und** `gym-analyse.html` committen — die
-generierte Seite enthält die Daten eingebettet und ist sonst veraltet.
+Danach `FitNotesWorkouts.csv` **und** `index.html` committen — die generierte
+Seite enthält die Daten eingebettet und wäre sonst veraltet, auch die live auf
+GitHub Pages ausgelieferte.
 
 Für einen schnellen Blick ohne Rebuild reicht Drag & Drop der neuen CSV auf die
 bereits geöffnete Seite.
@@ -112,6 +114,14 @@ def num(s):                          # "27,5" -> 27.5, deutsches Format
   brauchbar, darüber mit Vorbehalt nennen.
 - **Kurze Zeiträume tragen wenig.** Ein Programm mit zwei Einheiten erlaubt
   keine Trendaussage. Fallzahl mitnennen, statt einen Trend zu behaupten.
+
+## Nur ein Programm im Blick
+
+Das Dashboard wertet über `ONLY_PROGRAM` in `dashboard_template.html` derzeit
+**ausschließlich PPL/UL** aus. Bei Fragen zu Gesamtvolumen, Satzzahlen oder
+Trends daher immer dazusagen, dass sich die Zahlen auf dieses Programm beziehen
+— die CSV enthält mehr. Wer alles auswerten will, setzt die Konstante auf
+`null` und baut neu, oder rechnet direkt über die CSV.
 
 ## Programme vs. Splits
 

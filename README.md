@@ -1,9 +1,14 @@
 # Gym Progress — FitNotes Analyse
 
+**→ [Live ansehen](https://lostpold88.github.io/gym-analyse/)**
+
 Interaktives Dashboard zur Auswertung von Trainingslogs aus der App
 [FitNotes](https://www.fitnotesapp.com/). Aus einem CSV-Export entsteht eine
 **einzelne, eigenständige HTML-Datei**: keine externen Abhängigkeiten, kein
 Server, kein CDN. Doppelklick genügt, sie läuft auch offline.
+
+Ausgewertet wird derzeit ausschließlich das Programm **PPL/UL** (Push, Pull,
+Legs, Upper, Lower). Siehe [Auswertung auf ein Programm beschränken](#auswertung-auf-ein-programm-beschränken).
 
 ## Nutzung
 
@@ -11,7 +16,7 @@ Server, kein CDN. Doppelklick genügt, sie läuft auch offline.
 python build_dashboard.py
 ```
 
-Baut `gym-analyse.html` aus `FitNotesWorkouts.csv`. Andere Dateien:
+Baut `index.html` aus `FitNotesWorkouts.csv`. Andere Dateien:
 
 ```bash
 python build_dashboard.py mein_export.csv            # andere Quelle
@@ -39,14 +44,29 @@ heißt: nicht committen.
 
 | Tab | Inhalt |
 |---|---|
-| **Übersicht** | Gesamtvolumen als Leitzahl, Kennzahlen-Kacheln, Wochenverlauf (Volumen / Sätze / Wdh. / Einheiten umschaltbar), Trainingskalender als Heatmap, Körpergewichtsverlauf |
-| **Übungen** | Je Übung: bester Satz und geschätztes 1RM im Zeitverlauf, Aufwand je Einheit, vollständiger Satzverlauf mit markiertem Bestsatz |
-| **Muskelgruppen** | Sätze je Muskelgruppe, umschaltbar zwischen primärer und inklusive sekundärer Zählung, plus Wochenverlauf je Gruppe |
+| **Übersicht** | Gesamtvolumen als Leitzahl, Kennzahlen-Kacheln, Wochenverlauf (Volumen / Sätze / Wdh. / Einheiten / Dauer umschaltbar), Volumen je einzelner Einheit, Trainingskalender als Heatmap, Verteilung auf Wochentage, Körpergewichtsverlauf |
+| **Übungen** | Je Übung: bester Satz und geschätztes 1RM im Zeitverlauf, Aufwand je Einheit, Streudiagramm Gewicht × Wiederholungen (Farbe = Zeitpunkt), vollständiger Satzverlauf, sowie alle Übungen indexiert im Vergleich |
+| **Muskelgruppen** | Sätze, Volumen oder Sätze pro Woche je Muskelgruppe, umschaltbar zwischen primärer und inklusive sekundärer Zählung, plus Wochenverlauf je Gruppe |
+| **Intensität** | Verteilung über die Wiederholungsbereiche, deren Verschiebung im Wochenverlauf, Trainingsdauer je Einheit, Sätze je Übung und Einheit |
 | **Rekorde** | Sortierbare Bestenliste je Übung inklusive 1RM-Trend |
 | **Sessions** | Alle Einheiten mit Dauer und Volumen, aufklappbar bis auf Satzebene |
 
-Global filterbar nach Zeitraum, Programm und Split. Hell-/Dunkelmodus.
+Global filterbar nach Zeitraum und Split. Hell-/Dunkelmodus.
 Jedes Diagramm hat eine gleichwertige Tabellenansicht.
+
+## Auswertung auf ein Programm beschränken
+
+FitNotes kennt nur Workout-Namen. Die Vorlage fasst sie zu Programmen zusammen
+und wertet standardmäßig nur eines davon aus:
+
+```js
+const ONLY_PROGRAM = "PPL/UL";   // null = alle Programme auswerten
+```
+
+Einheiten anderer Programme werden gar nicht erst geladen; wie viele das sind
+und aus welchen Splits, steht in der Fußzeile der Seite — es verschwindet also
+nichts stillschweigend. Die Zuordnung der Namen steht direkt darüber in
+`PROGRAMS`.
 
 ## Trainingsprogramme anpassen
 
@@ -85,7 +105,7 @@ unter „Sonstige" — es geht nie ein Datensatz verloren.
 | `build_dashboard.py` | Bettet den CSV-Export in die Vorlage ein und schreibt die fertige Seite. Ohne Fremdpakete. |
 | `check_export.py` | Prüft einen neuen Export gegen den committeten Stand, bevor er übernommen wird. |
 | `FitNotesWorkouts.csv` | Der Rohexport aus FitNotes. |
-| `gym-analyse.html` | Generiert. Das ist die Datei, die man öffnet. |
+| `index.html` | Generiert. Das ist die Datei, die man öffnet — und die GitHub Pages ausliefert. |
 
 ## Barrierefreiheit & Darstellung
 

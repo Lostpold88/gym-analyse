@@ -4,7 +4,7 @@ Hinweise für Coding-Agents, die an diesem Repo arbeiten.
 
 ## Die wichtigste Regel
 
-**`gym-analyse.html` wird nie von Hand bearbeitet.** Sie ist ein Build-Artefakt.
+**`index.html` wird nie von Hand bearbeitet.** Sie ist ein Build-Artefakt.
 Jede Änderung gehört in `dashboard_template.html`, danach:
 
 ```bash
@@ -12,7 +12,8 @@ python build_dashboard.py
 ```
 
 Wer direkt in der generierten Datei editiert, verliert die Änderung beim
-nächsten Build ersatzlos.
+nächsten Build ersatzlos. Der Dateiname ist `index.html`, weil GitHub Pages
+die Seite unter der Root-URL ausliefert — nicht umbenennen.
 
 ## Aufbau
 
@@ -22,7 +23,12 @@ nächsten Build ersatzlos.
 | `build_dashboard.py` | Ersetzt die beiden Platzhalter und schreibt die Ausgabe. Sonst nichts. Keine Fremdpakete, keine Auswertungslogik. |
 | `check_export.py` | Prüft einen neuen CSV-Export gegen `HEAD`, bevor er übernommen wird. Liest die Splitnamen per Regex aus `PROGRAMS` — wer die Struktur dieses Blocks ändert, muss das Regex mitziehen. |
 | `FitNotesWorkouts.csv` | Rohexport aus FitNotes. Persönliche Gesundheitsdaten — nicht in öffentliche Kontexte kopieren. |
-| `gym-analyse.html` | Generiert. |
+| `index.html` | Generiert. Wird von GitHub Pages ausgeliefert. |
+
+Das Repo ist **öffentlich** und die Seite liegt live auf GitHub Pages. Die
+eingebettete CSV enthält persönliche Trainings- und Körpergewichtsdaten — das
+ist dem Besitzer bekannt und so gewollt, aber jede Änderung, die weitere Daten
+einbettet, sollte das im Hinterkopf behalten.
 
 Die Auswertung läuft **vollständig im Browser**, nicht in Python. Das ist
 Absicht: derselbe Parser bedient die eingebettete CSV und eine per Drag & Drop
@@ -67,6 +73,10 @@ Alles hier ist am echten Export aufgetreten, nicht theoretisch:
 - **Programmzuordnung** steht in `const PROGRAMS` oben im Skriptteil. Unbekannte
   Workout-Namen fallen automatisch auf `"Sonstige"` — nie stillschweigend
   verwerfen.
+- **`ONLY_PROGRAM`** beschränkt die gesamte Auswertung auf ein Programm
+  (aktuell `"PPL/UL"`). Was dabei wegfällt, wird gezählt und in der Fußzeile
+  ausgewiesen. Diese Ausweisung nicht entfernen — sonst verschwinden Daten
+  lautlos aus der Auswertung.
 
 ## Prüfen vor dem Abschluss
 
