@@ -23,8 +23,9 @@ TEMPLATE = "dashboard_template.html"
 read = lambda t: list(csv.DictReader(io.StringIO(t)))
 key = lambda r: (r["StartTime"], r["Name"], r["Exercise"], r["Reps"], r["Weight"])
 
+ref = sys.argv[1] if len(sys.argv) > 1 else "HEAD"
 new = read(open(CSV, encoding="utf-8-sig").read())
-old = read(subprocess.run(["git", "show", f"HEAD:{CSV}"], capture_output=True,
+old = read(subprocess.run(["git", "show", f"{ref}:{CSV}"], capture_output=True,
                           text=True, encoding="utf-8").stdout.lstrip("﻿"))
 
 if not new:
