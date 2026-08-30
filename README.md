@@ -30,15 +30,21 @@ Parser-Pfad, die Seite wertet die Datei lokal aus; nichts wird hochgeladen.
 ### Neuen Export übernehmen
 
 FitNotes exportiert stets die vollständige Historie; die neue Datei *ersetzt*
-`FitNotesWorkouts.csv`, sie wird nicht angehängt. Vor dem Übernehmen prüfen:
+`FitNotesWorkouts.csv`, sie wird nicht angehängt.
+
+**Option A — Direkt am Smartphone / Web:**
+1. In FitNotes den CSV-Export erstellen.
+2. Im Browser auf GitHub das Repo öffnen.
+3. `FitNotesWorkouts.csv` hochladen und committen (`Add file` → `Upload files`).
+4. Eine GitHub Action führt `check_export.py` und `build_dashboard.py` automatisch im Hintergrund aus und aktualisiert GitHub Pages.
+
+**Option B — Lokal per Skript:**
+Vor dem Committen prüfen:
 
 ```bash
 python check_export.py
+python build_dashboard.py
 ```
-
-Meldet, ob der Export versehentlich zeitlich gefiltert war (dann fehlt Historie)
-und ob neue Workout-Namen ohne Zuordnung unter „Sonstige" landen würden. Exit 1
-heißt: nicht committen.
 
 ## Was die Seite zeigt
 
