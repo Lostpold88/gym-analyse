@@ -10,3 +10,6 @@ __pycache__/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Lokale Browserprüfung (keine Laufzeitabhängigkeiten)
+.qa/

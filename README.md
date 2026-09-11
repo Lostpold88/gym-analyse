@@ -51,7 +51,7 @@ python build_dashboard.py
 | Tab | Inhalt |
 |---|---|
 | **Übersicht** | Gesamtvolumen als Leitzahl, Kennzahlen-Kacheln, Wochenverlauf (Volumen / Sätze / Wdh. / Einheiten / Dauer umschaltbar), Volumen je einzelner Einheit, Trainingskalender als Heatmap, Verteilung auf Wochentage, Körpergewichtsverlauf |
-| **Übungen** | Je Übung: bester Satz und geschätztes 1RM im Zeitverlauf, Aufwand je Einheit, Streudiagramm Gewicht × Wiederholungen (Farbe = Zeitpunkt), vollständiger Satzverlauf, sowie alle Übungen indexiert im Vergleich |
+| **Übungen** | Je Übung: bester Satz und geschätztes 1RM im Zeitverlauf, Aufwand je Einheit, Wiederholungsvergleich je Gewicht (erste gegen letzte Einheit), vollständiger Satzverlauf, sowie alle Übungen indexiert im Vergleich |
 | **Muskelgruppen** | Sätze, Volumen oder Sätze pro Woche je Muskelgruppe, umschaltbar zwischen primärer und inklusive sekundärer Zählung, plus Wochenverlauf je Gruppe |
 | **Intensität** | Verteilung über die Wiederholungsbereiche, deren Verschiebung im Wochenverlauf, Trainingsdauer je Einheit, Sätze je Übung und Einheit |
 | **Rekorde** | Sortierbare Bestenliste je Übung inklusive 1RM-Trend |
@@ -59,6 +59,50 @@ python build_dashboard.py
 
 Global filterbar nach Zeitraum und Split. Hell-/Dunkelmodus.
 Jedes Diagramm hat eine gleichwertige Tabellenansicht.
+
+## Vergleiche und mobile Nutzung
+
+- **Zeitraumvergleich:** Einheiten, Sätze, Volumen und Volumen je Einheit
+  werden mit einem unmittelbar vorhergehenden, gleich langen Zeitraum
+  verglichen. Bei „Alles“ sind das die letzten 28 gegen die vorherigen
+  28 Tage. Bezugspunkt ist das letzte Training im Export, nicht der heutige
+  Tag. Die Split-Auswahl gilt für beide Fenster. Beginnt die vorhandene
+  Historie erst im Vergleichsfenster, wird keine Prozentänderung ausgewiesen.
+- **Stabilerer Übungstrend:** Median der besten geschätzten 1RM-Werte der
+  letzten drei gegen die ersten drei geeigneten Einheiten. Mindestens sechs
+  Einheiten sind nötig. Verwendet werden Sätze mit 1–10 Wiederholungen,
+  die nicht als fehlgeschlagen markiert sind. Die übrigen
+  Diagramme zeigen weiterhin den vollständigen Verlauf gemäß globalem Filter.
+- **iPhone:** Einklappbare Filter, feste Navigation unten, Rücksicht auf
+  Safe Areas, große Touch-Ziele und eine Übungsauswahl über der unteren
+  Navigation. Einheiten erscheinen als aufklappbare Karten. CSV-Import über
+  „CSV laden“ und die Dateien-App; kein Upload.
+- **Fehlerhafte Exporte:** Fehlende Pflichtspalten, kaputte Quotes, falsche
+  Spaltenzahlen sowie ungültige Datums- oder Zahlenwerte werden abgelehnt.
+  Die bisher geladenen Daten bleiben dabei erhalten.
+
+## Browserprüfung
+
+Die ausgelieferte Seite benötigt weiterhin keine externen Abhängigkeiten.
+Für Entwicklungstests kann Playwright separat im ignorierten `.qa`-Ordner
+installiert werden. Python rechnet Referenzwerte unabhängig aus dem CSV-Export;
+der Browsertest gleicht sie mit der JavaScript-Auswertung ab und prüft beide
+Browser-Engines bei 1440 und 375 Pixeln, Hell-/Dunkelmodus, Filter, Imports,
+Tastaturnavigation und Übungstrends.
+
+```powershell
+python build_dashboard.py
+python tests/reference_metrics.py
+npm install --prefix .qa playwright
+$env:NODE_PATH = "$PWD/.qa/node_modules"
+$env:PLAYWRIGHT_BROWSERS_PATH = "$PWD/.qa/browsers"
+node .qa/node_modules/playwright/cli.js install chromium webkit
+node tests/browser_check.cjs
+```
+
+Screenshots und Referenzwerte bleiben unter `.qa/` und werden nicht committet.
+WebKit mit mobiler Emulation ersetzt keinen abschließenden Test auf einem
+physischen iPhone, insbesondere für Dateien-App und Homescreen-Modus.
 
 ## Auswertung auf ein Programm beschränken
 
