@@ -50,8 +50,8 @@ python build_dashboard.py
 
 | Tab | Inhalt |
 |---|---|
-| **Übersicht** | Gesamtvolumen als Leitzahl, Kennzahlen-Kacheln, Wochenverlauf (Volumen / Sätze / Wdh. / Einheiten / Dauer umschaltbar), Volumen je einzelner Einheit, Trainingskalender als Heatmap, Verteilung auf Wochentage, Körpergewichtsverlauf |
-| **Übungen** | Je Übung: bester Satz und geschätztes 1RM im Zeitverlauf, Aufwand je Einheit, Wiederholungsvergleich je Gewicht (erste gegen letzte Einheit), vollständiger Satzverlauf, sowie alle Übungen indexiert im Vergleich |
+| **Übersicht** | Kraftentwicklung je Übung mit Status, Suche und direktem Sprung zur Übung; danach Trainingsmenge, Wochenverlauf, Volumen je Einheit, Trainingskalender, Wochentage und Körpergewicht |
+| **Übungen** | Kraftvergleich nach Einheiten oder frei wählbarem Zeitraum mit nachvollziehbaren Ausgangswerten; bester Satz und geschätztes 1RM im Zeitverlauf, Aufwand, Wiederholungsvergleich je Gewicht, Satzverlauf und kompakte Krafttrends aller Übungen |
 | **Muskelgruppen** | Sätze, Volumen oder Sätze pro Woche je Muskelgruppe, umschaltbar zwischen primärer und inklusive sekundärer Zählung, plus Wochenverlauf je Gruppe |
 | **Intensität** | Verteilung über die Wiederholungsbereiche, deren Verschiebung im Wochenverlauf, Trainingsdauer je Einheit, Sätze je Übung und Einheit |
 | **Rekorde** | Sortierbare Bestenliste je Übung inklusive 1RM-Trend |
@@ -68,11 +68,46 @@ Jedes Diagramm hat eine gleichwertige Tabellenansicht.
   28 Tage. Bezugspunkt ist das letzte Training im Export, nicht der heutige
   Tag. Die Split-Auswahl gilt für beide Fenster. Beginnt die vorhandene
   Historie erst im Vergleichsfenster, wird keine Prozentänderung ausgewiesen.
-- **Stabilerer Übungstrend:** Median der besten geschätzten 1RM-Werte der
-  letzten drei gegen die ersten drei geeigneten Einheiten. Mindestens sechs
-  Einheiten sind nötig. Verwendet werden Sätze mit 1–10 Wiederholungen,
-  die nicht als fehlgeschlagen markiert sind. Die übrigen
-  Diagramme zeigen weiterhin den vollständigen Verlauf gemäß globalem Filter.
+- **Kraftentwicklung:** „Zuletzt“ vergleicht die letzten drei mit den
+  unmittelbar vorherigen drei geeigneten Einheiten. „Seit Beginn“ vergleicht
+  die letzten drei mit den ersten drei im gewählten Zeitraum. Die Fenster
+  überschneiden sich nicht. Bei weniger Historie werden jeweils ein oder zwei
+  Einheiten verglichen; ab zwei getrennten Einheiten ist eine erste Tendenz möglich. Pro
+  Einheit zählt der höchste geschätzte 1RM-Wert aus erfolgreichen Sätzen mit
+  1–10 Wiederholungen. Je Fenster wird der Median der vorhandenen Werte verwendet.
+  Übersicht, Übungsansicht, Mini-Verläufe und Rekordtabelle verwenden dieselbe
+  Auswahl. Die Ausgangswerte sind in der Übungsansicht einsehbar.
+- **Eigener Kraftvergleich:** „Letzte X Wochen“ erlaubt 1–104 ganze Wochen,
+  gerechnet bis zum letzten Training im Export. „Eigener Zeitraum“ erlaubt
+  Start- und Enddatum einschließlich beider Tage. Beide Modi vergleichen
+  den gewählten Abschnitt mit dem unmittelbar vorherigen, gleich langen
+  Abschnitt. Alle geeigneten Einheiten pro Abschnitt gehen in den Median ein;
+  mindestens eine je Abschnitt ist erforderlich. Bei einer geraden Anzahl
+  wird der Durchschnitt der beiden mittleren Werte verwendet. Die Referenz
+  behält die Split-Auswahl, liegt aber außerhalb des aktiven Datumsfilters.
+  Beide Zeiträume werden sichtbar ausgewiesen. Die Datumsauswahl gilt für
+  alle Ansichten; ungültige Eingaben ändern die letzte gültige Auswahl nicht.
+- **Datenbasis und Trainingspausen:** Weniger als drei Einheiten auf einer
+  Seite oder eine unvollständige Vergleichshistorie werden sichtbar als
+  „Erste Tendenz“ gekennzeichnet, statt einen vorhandenen Vergleich zu
+  verbergen. Fehlt im direkten Vorzeitraum eine geeignete Einheit, kann die
+  letzte geeignete Einheit davor einspringen, höchstens 90 Tage vor dem
+  gewählten Abschnitt. Diese Ersatzbasis erscheint mit Datum in der Liste,
+  in den Übungsdetails und in der Tabelle. Die Option ist abschaltbar.
+- **Einordnung:** Über +2,5 % wird „Verbessert“, unter −2,5 % „Zurückgegangen“
+  angezeigt; dazwischen „Etwa gleich“. Das ist eine Orientierung für die
+  Anzeige, keine statistische Signifikanzschwelle. Körpergewichtsübungen,
+  fehlende geeignete Einheiten auf einer Vergleichsseite oder mehr als 28 Tage ohne geeigneten
+  Satz vor dem Ende des gewählten Zeitraums bleiben „Noch offen“. Der letzte
+  Punkt bezieht sich auf das Zeitraumende im Export, nicht auf heute.
+  Körpergewichtsübungen werden über den Übungsnamen (Klimmzüge, Pull-ups,
+  Chin-ups, Dips) oder die Equipment-Angabe erkannt; individuelle Namen
+  können eine manuelle Einordnung erfordern.
+- **Darstellung:** Blaue Balken nach rechts zeigen Zuwachs, orange Balken nach
+  links Rückgang. Prozentwerte und Status stehen immer auch als Text dabei.
+  Statusfilter, Suche und eine vollständige Tabelle helfen beim Vergleichen.
+  Trainingsmenge wird separat ausgewiesen: Weniger Volumen bedeutet nicht
+  automatisch weniger Kraft.
 - **iPhone:** Einklappbare Filter, feste Navigation unten, Rücksicht auf
   Safe Areas, große Touch-Ziele und eine Übungsauswahl über der unteren
   Navigation. Einheiten erscheinen als aufklappbare Karten. CSV-Import über
@@ -88,7 +123,12 @@ Für Entwicklungstests kann Playwright separat im ignorierten `.qa`-Ordner
 installiert werden. Python rechnet Referenzwerte unabhängig aus dem CSV-Export;
 der Browsertest gleicht sie mit der JavaScript-Auswertung ab und prüft beide
 Browser-Engines bei 1440 und 375 Pixeln, Hell-/Dunkelmodus, Filter, Imports,
-Tastaturnavigation und Übungstrends.
+Tastaturnavigation und Übungstrends. Die Gegenrechnung umfasst alle vier
+Vergleichsmodi, ihre Quell-Einheiten und die Statuszuordnung. Weitere
+Fälle prüfen Ausreißer, gegenläufige Kurz-/Langzeitentwicklung, zu wenig
+Daten sowie Körpergewichtsübungen und veraltete Vergleiche. Der Zeitraumtest
+prüft außerdem Datumseingaben, Wochenzahlen, gerade Median-Gruppen, exakte
+Datumsgrenzen, unvollständige Historie und den gemeinsamen Filterzustand.
 
 ```powershell
 python build_dashboard.py
@@ -98,6 +138,7 @@ $env:NODE_PATH = "$PWD/.qa/node_modules"
 $env:PLAYWRIGHT_BROWSERS_PATH = "$PWD/.qa/browsers"
 node .qa/node_modules/playwright/cli.js install chromium webkit
 node tests/browser_check.cjs
+node tests/period_check.cjs
 ```
 
 Screenshots und Referenzwerte bleiben unter `.qa/` und werden nicht committet.
@@ -134,6 +175,13 @@ const PROGRAMS = [
 Die Reihenfolge in `splits` bestimmt auch die Reihenfolge der Filter-Chips.
 Neue Namen hier ergänzen, dann neu bauen. Alles Unbekannte landet automatisch
 unter „Sonstige" — es geht nie ein Datensatz verloren.
+
+`EXCLUDED_EXERCISES` enthält die drei vom Besitzer abgelösten Übungen:
+Hammer Curls (KH), JM-Press (Multipresse) und Beinpresse (Sitzend). Ihre Sätze
+werden vor jeder Aggregation herausgefiltert, auch bei nachgeladenen CSV-Dateien.
+Dadurch tauchen sie weder in Übungen, Rekorden und Einheiten noch in Kennzahlen
+oder Muskelgruppen auf. Die Zahl ausgeschlossener Sätze steht in der Fußzeile;
+die CSV bleibt als vollständiger Rohexport erhalten.
 
 ## Berechnungen
 

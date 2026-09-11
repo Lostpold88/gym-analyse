@@ -23,10 +23,28 @@ const fixture = 'Name,StartTime,Exercise,Reps,Weight,IsWarmup,Status\n' +
         volume:DATA.sets.reduce((n,s)=>n+s.volume,0),reps:DATA.sets.reduce((n,s)=>n+s.reps,0),
         comparison:comparisonData(),muscles:Object.fromEntries(muscleTotals(DATA.sets,'primary').map(m=>[m.cat,m.sets]))}));
       for(const key of ['sets','sessions','volume','reps'])near(actual[key],reference.total[key]);
+      assert.equal(await page.evaluate(()=>DATA.excludedExercises.sets),reference.excludedSets);
+      assert.equal(await page.evaluate(()=>DATA.sets.some(s=>EXCLUDED_EXERCISES.has(s.exercise))),false);
+      const exclusion=await page.evaluate(csv=>{
+        const extra=[...EXCLUDED_EXERCISES].map(name=>'Push,2026-06-09T12:00:00Z,'+name+',5,40,false,Done').join('\n');
+        const data=buildData(csv+'\n'+extra);
+        return {sets:data.sets.length,excluded:data.excludedExercises.sets,exercises:[...new Set(data.sets.map(s=>s.exercise))]};
+      },fixture);
+      assert.equal(exclusion.sets,6);assert.equal(exclusion.excluded,3);assert.deepEqual(exclusion.exercises,['Drücken, eng']);
       for(const period of ['current','previous']) for(const key of ['sets','sessions','volume','perSession'])near(actual.comparison[period][key],reference[period][key]);
       assert.deepEqual(actual.muscles,reference.muscles);
       const progress=await page.evaluate(()=>Object.fromEntries([...new Set(DATA.sets.map(s=>s.exercise))].map(name=>[name,repsByWeight(exerciseSessions(DATA.sessions,name))])));
       for(const [name,rows] of Object.entries(reference.progress))assert.deepEqual(progress[name],rows);
+      for(const mode of ['recent','start']) {
+        const assessments=await page.evaluate(mode=>Object.fromEntries([...new Set(DATA.sets.map(s=>s.exercise))].map(name=>[name,exerciseAssessment(DATA.sessions,name,mode)])),mode);
+        for(const [name,expected] of Object.entries(reference.trends[mode])) {
+          const a=assessments[name];assert.equal(a.count,expected.count);assert.equal(a.status,expected.status);
+          if(expected.pct!==undefined) {
+            for(const key of ['first','last','pct'])near(a[key],expected[key]);
+            for(const key of ['before','after'])assert.deepEqual(a[key].map(p=>[p.start,p.split]),expected[key]);
+          }
+        }
+      }
       await page.screenshot({path:path.join(root,`.qa/${name}-${width}-start.png`)});
       for(const theme of ['light','dark']) {
         await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
@@ -39,9 +57,34 @@ const fixture = 'Name,StartTime,Exercise,Reps,Weight,IsWarmup,Status\n' +
           await page.waitForTimeout(80);
           assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false,`${name} ${width} ${view} Überlauf`);
           assert.equal(await page.locator(`#panel-${view}`).isVisible(),true);
+          assert.doesNotMatch(await page.locator(`#panel-${view}`).innerText(),/Hammer Curls|JM-Press|Beinpresse \(Sitzend\)/);
           await page.screenshot({path:path.join(root,`.qa/${name}-${width}-${theme}-${view}.png`),fullPage:true});
         }
       }
+      // Die Fortschrittsliste filtert, sucht und öffnet die richtige Übung.
+      await page.locator('#tab-overview').click();
+      await page.locator('[data-progress-filter="down"]').click();
+      assert.ok(await page.locator('.progress-row').count()>0);
+      assert.equal(await page.locator('.progress-row:not(.down)').count(),0);
+      await page.locator('#progress-all').click();
+      await page.locator('#progress-search').fill('Trizeps');
+      assert.equal(await page.locator('.progress-row').count(),2);
+      await page.locator('#progress-search').fill('Eine unbekannte Übung');
+      assert.equal(await page.locator('.progress-row').count(),0);
+      await page.locator('#progress-search').fill('');
+      await page.locator('#progress-more').click();
+      assert.equal(await page.locator('.progress-row').count(),Object.keys(reference.trends.recent).length);
+      await page.locator('#progress-overview [data-progress-mode="start"]').click();
+      assert.equal(await page.evaluate(()=>state.progressMode),'start');
+      await page.locator('#progress-overview [data-progress-mode="recent"]').click();
+      const selected=await page.locator('.progress-row').first().getAttribute('data-exercise');
+      await page.locator('.progress-row').first().click();
+      assert.equal(await page.evaluate(()=>state.exercise),selected);
+      await page.locator('#ex-insight summary').click();
+      assert.equal(await page.locator('#ex-insight tbody tr').count(),6);
+      await page.locator('#ex-insight [data-progress-mode="start"]').click();
+      assert.equal(await page.evaluate(()=>state.progressMode),'start');
+      await page.locator('#ex-insight [data-progress-mode="recent"]').click();
       // Native Tastaturnavigation und Sortierung.
       await page.locator('#tab-overview').focus();await page.keyboard.press('ArrowRight');
       assert.equal(await page.locator('#tab-exercises').getAttribute('aria-selected'),'true');
@@ -63,7 +106,7 @@ const fixture = 'Name,StartTime,Exercise,Reps,Weight,IsWarmup,Status\n' +
         await page.waitForFunction(()=>getComputedStyle(document.getElementById('tt')).opacity==='1');
         assert.equal(await page.locator('#tt').evaluate(e=>getComputedStyle(e).opacity),'1');
       }
-      if(width===375)await page.locator('#filter-panel > summary').click();
+      if(!await page.locator('#filter-panel').evaluate(e=>e.open))await page.locator('#filter-panel > summary').click();
       await page.locator('[data-range="custom"]').click();
       await page.locator('#date-from').fill('2026-07-01');await page.locator('#date-from').dispatchEvent('change');
       await page.locator('#date-to').fill('2026-07-31');await page.locator('#date-to').dispatchEvent('change');
@@ -86,6 +129,23 @@ const fixture = 'Name,StartTime,Exercise,Reps,Weight,IsWarmup,Status\n' +
       assert.equal(await page.evaluate(()=>state.range),'all');
       const trend=await page.evaluate(()=>exerciseTrend(filtered(),'Drücken, eng'));
       near(trend.first,65*(1+5/30));near(trend.last,80*(1+5/30));near(trend.pct,100*(80-65)/65);
+      // Gegenläufige Entwicklung: langfristig verbessert, zuletzt zurückgegangen.
+      const directionCases=await page.evaluate(()=>{
+        const data=(weights,name='Test')=>buildData('Name,StartTime,Exercise,Reps,Weight,Status\n'+weights.map((w,i)=>'Push,2026-06-'+String(i+1).padStart(2,'0')+'T12:00:00Z,'+name+',5,'+w+',Done').join('\n')).sessions;
+        const ss=data([50,50,50,80,80,80,65,65,65]);
+        return {recent:exerciseAssessment(ss,'Test','recent','2026-06-09'),start:exerciseAssessment(ss,'Test','start','2026-06-09'),
+          outlier:exerciseAssessment(data([60,60,600,66,66,66]),'Test','recent','2026-06-09'),
+          stable:exerciseAssessment(data([60,60,60,61,61,61]),'Test','recent','2026-06-09'),
+          short:exerciseAssessment(data([60,60,60,61,61]),'Test','recent','2026-06-09'),
+          stale:exerciseAssessment(ss,'Test','recent','2026-09-09'),
+          bodyweight:exerciseAssessment(data([60,60,60,70,70,70],'Klimmzüge'),'Klimmzüge','recent','2026-06-09')};
+      });
+      assert.equal(directionCases.recent.status,'down');near(directionCases.recent.pct,-18.75);
+      assert.equal(directionCases.start.status,'up');near(directionCases.start.pct,30);
+      assert.equal(directionCases.outlier.status,'up');near(directionCases.outlier.pct,10);
+      assert.equal(directionCases.stable.status,'stable');
+      assert.equal(directionCases.short.status,'stable');assert.equal(directionCases.short.confidence,'early');
+      for(const key of ['stale','bodyweight'])assert.equal(directionCases[key].status,'unclear');
       const example='Name,StartTime,Exercise,Reps,Weight,Status\n'+[
         'Push,2026-06-01T10:00:00Z,A,4,50,Done',
         'Push,2026-06-01T10:00:00Z,A,6,50,Done',

@@ -77,6 +77,15 @@ Alles hier ist am echten Export aufgetreten, nicht theoretisch:
   (aktuell `"PPL/UL"`). Was dabei wegfällt, wird gezählt und in der Fußzeile
   ausgewiesen. Diese Ausweisung nicht entfernen — sonst verschwinden Daten
   lautlos aus der Auswertung.
+- **`EXCLUDED_EXERCISES`** entfernt die vom Besitzer abgelösten Übungen vor
+  jeder Aggregation, auch beim CSV-Import. Aktuell: Hammer Curls (KH),
+  JM-Press (Multipresse), Beinpresse (Sitzend). Die ausgeschlossene Satzzahl
+  bleibt in der Fußzeile sichtbar. Den Rohexport nicht dafür kürzen.
+- **Kraftvergleich bei wenigen Daten:** Schon je eine geeignete Einheit
+  erlaubt eine sichtbar vorläufige Tendenz. Ab drei je Seite wird der Median
+  über mehrere Einheiten gestützt. Ein optionaler Ersatzvergleich bei leeren
+  Vorzeiträumen muss sein tatsächliches Datum nennen; niemals die ältere
+  Einheit still in den angezeigten direkten Vorzeitraum umdatieren.
 
 ## Prüfen vor dem Abschluss
 
