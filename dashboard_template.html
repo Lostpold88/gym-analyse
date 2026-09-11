@@ -352,14 +352,12 @@ td .swatch { width: 9px; height: 9px; border-radius: 3px; display: inline-block;
 .primary-action { border-color: var(--series-1); box-shadow: inset 0 -2px var(--series-1); font-weight: 600; }
 .form-error { color: var(--text-primary); font-size: 13px; flex-basis: 100%; margin: 0; }
 .form-error:empty { display: none; }
-.period-windows { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
-.period-windows > div { border-left: 3px solid var(--axis); padding-left: 12px; }
-.period-windows > div:first-child { border-color: var(--series-1); }
-.period-windows span { display: block; font-size: 12px; color: var(--text-secondary); }
-.period-windows strong { display: block; margin-top: 4px; font-size: 14px; font-weight: 600; }
-.period-form .period-options { flex: 1 0 100%; flex-direction: row; align-items: flex-start; min-height: 44px; gap: 10px; grid-column: 1/-1; line-height: 1.6; }
-.period-options input[type="checkbox"] { flex: none; appearance: auto; width: 18px; height: 18px; min-height: 18px; margin: 1px 0 0; padding: 0; accent-color: var(--series-1); }
 .progress-confidence { display: inline-block; margin-top: 5px; padding: 2px 6px; border: 1px solid var(--border); border-radius: 5px; font-size: 10px; color: var(--text-secondary); }
+.period-scope { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px 16px; padding-top: 18px; margin-top: 18px; border-top: 1px solid var(--border); font-size: 13px; }
+.period-scope > span { color: var(--text-secondary); }
+.period-scope > strong { font-weight: 600; }
+.period-flow { display: flex; align-items: center; gap: 16px; margin-top: 14px; font-size: 17px; font-weight: 600; }
+.period-arrow { color: var(--series-1); font-size: 24px; font-weight: 400; }
 .period-hint { font-size: 12px; line-height: 1.65; color: var(--text-secondary); margin: 14px 0 0; }
 .foot { grid-column: 2; color: var(--text-secondary); font-size: 12px; line-height: 1.8; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
 .foot code { background: var(--hover-wash); padding: 1px 5px; border-radius: 4px; }
@@ -494,8 +492,6 @@ td .swatch { width: 9px; height: 9px; border-radius: 3px; display: inline-block;
   .period-form input[type="date"] { width: 100%; padding: 8px 5px; }
   .period-form[data-period-mode="weeks"] label { grid-column: 1/-1; }
   .period-form button, .period-form .form-error { grid-column: 1/-1; }
-  .period-windows { grid-template-columns: 1fr; gap: 14px; }
-  .period-windows strong { font-size: 13px; }
   .foot { font-size: 11px; margin-top: 25px; padding-top: 20px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; } }
@@ -576,7 +572,7 @@ td .swatch { width: 9px; height: 9px; border-radius: 3px; display: inline-block;
         <div class="progress-axis" id="progress-axis"></div>
         <div id="progress-list" class="progress-list"></div>
         <div class="progress-bottom"><span id="progress-results" class="note" role="status"></span><button id="progress-more" aria-expanded="false">Alle Übungen anzeigen</button></div>
-        <details class="data-table"><summary>So wird der Fortschritt eingeordnet</summary><p class="method-note">„Zuletzt“ vergleicht die jüngsten mit den vorherigen geeigneten Einheiten; „Seit Beginn“ mit den ersten. Je Gruppe werden bis zu drei getrennte Einheiten genutzt, bei weniger Daten ein oder zwei. Bei „Letzte X Wochen“ und „Eigener Zeitraum“ zählt der Median aller geeigneten Einheiten pro Abschnitt. Sobald auf beiden Seiten mindestens eine Einheit vorliegt, erscheint eine erste Tendenz. Ab drei je Seite ist der Vergleich über mehrere Einheiten gestützt. Fehlt die direkte Referenz, kann die letzte geeignete Einheit davor einspringen, höchstens 90 Tage vor dem gewählten Abschnitt; Datum und Ersatzvergleich werden ausgewiesen. Eine unvollständige Historie wird ebenfalls als begrenzte Datenbasis gekennzeichnet. Mehr als +2,5 %: verbessert; weniger als −2,5 %: zurückgegangen; dazwischen: etwa gleich. Das sind Anzeigegrenzen, kein Nachweis einer Kraftänderung. Basis sind erfolgreiche Sätze mit 1–10 Wiederholungen. Körpergewichtsübungen und Übungen ohne geeignete Sätze in den letzten 28 Tagen des gewählten Zeitraums bleiben offen.</p></details>
+        <details class="data-table"><summary>So wird der Fortschritt eingeordnet</summary><p class="method-note">Für „Letzte X Wochen“, „Eigener Zeitraum“ und „Seit Beginn“ werden deine ersten mit deinen letzten geeigneten Einheiten innerhalb der Auswahl verglichen. „Zuletzt“ vergleicht die jüngsten mit den unmittelbar vorherigen Einheiten, ebenfalls innerhalb der Auswahl. Je Gruppe zählen bis zu drei Einheiten; bei weniger Daten je eine oder zwei. Die Gruppen überschneiden sich nie. Verglichen wird der mittlere Schätzwert (Median), damit einzelne Ausreißer weniger Einfluss haben. Ab zwei getrennten Einheiten ist eine erste Tendenz möglich; ab drei je Gruppe ist der Vergleich über mehrere Einheiten gestützt. Mehr als +2,5 %: verbessert; weniger als −2,5 %: zurückgegangen; dazwischen: etwa gleich. Das sind Anzeigegrenzen, kein Nachweis einer Kraftänderung. Basis sind erfolgreiche Sätze mit 1–10 Wiederholungen. Körpergewichtsübungen und Übungen ohne geeignete Sätze in den letzten 28 Tagen des gewählten Zeitraums bleiben offen.</p></details>
         <details class="data-table"><summary>Alle Vergleichswerte als Tabelle</summary><div id="progress-table" class="tbl-wrap" tabindex="0" role="region" aria-label="Kraftentwicklung je Übung"></div></details>
       </div>
       <div class="card summary-card">
@@ -610,7 +606,7 @@ td .swatch { width: 9px; height: 9px; border-radius: 3px; display: inline-block;
         <div class="chartview" id="week-chart"></div>
         <div class="tblview tbl-wrap" id="week-table"></div>
       </div>
-      <div class="card comparison-card"><div class="card-head"><div><h2>Trainingsmenge im Vergleich</h2><p class="note" id="comparison-note"></p></div></div><div class="comparison-grid" id="comparison"></div><p class="method-note">Mehr oder weniger Trainingsmenge ist für sich genommen keine Verbesserung oder Verschlechterung der Kraft. Andere Splits, kürzere Einheiten oder Pausen verändern diese Werte ebenfalls.</p></div>
+      <div class="card comparison-card"><div class="card-head"><div><h2>Trainingsmenge: Anfang → Ende</h2><p class="note" id="comparison-note"></p></div></div><div class="comparison-grid" id="comparison"></div><p class="method-note">Mehr oder weniger Trainingsmenge ist für sich genommen keine Verbesserung oder Verschlechterung der Kraft. Andere Splits, kürzere Einheiten oder Pausen verändern diese Werte ebenfalls.</p></div>
 
       <div class="card">
         <div class="card-head">
@@ -1057,7 +1053,7 @@ const state = {
   view: "overview",
   range: "all", from: null, to: null, weeks: 4,
   programs: new Set(), splits: new Set(),
-  progressMode: "recent", progressFilter: "all", progressQuery: "", progressExpanded: false, progressFallback: true,
+  progressMode: "recent", progressFilter: "all", progressQuery: "", progressExpanded: false,
   weekMetric: "volume",
   exMetric: "volume",
   muscMode: "primary", muscMetric: "sets",
@@ -2638,30 +2634,30 @@ addEventListener("drop", e => {
 });
 
 
-/* Vergleich: gleich lange Fenster; fehlende Historie ist keine Null-Baseline. */
+/* Auch die Trainingsmenge wird ausschließlich innerhalb der Auswahl verglichen. */
 function comparisonData() {
-  const r = activeRange(); if (!r.to) return null;
-  const days = state.range === "all" ? 28 : daysBetween(r.from,r.to)+1;
-  const from = state.range === "all" ? addDays(r.to,-27) : r.from;
-  const previousTo = addDays(from,-1), previousFrom = addDays(from,-days);
-  const summarize = ss => ({sessions:ss.length,sets:setsOf(ss).length,
-    volume:ss.reduce((n,s)=>n+s.volume,0), perSession:ss.length ? ss.reduce((n,s)=>n+s.volume,0)/ss.length : null});
-  return {from,to:r.to,previousFrom,previousTo,days,
-    covered:DATA.sessions.length > 0 && DATA.sessions[0].date <= previousFrom,
-    current:summarize(scopedSessions(from,r.to)),previous:summarize(scopedSessions(previousFrom,previousTo))};
+  const r=activeRange();if(!r.from || !r.to)return null;
+  const days=daysBetween(r.from,r.to)+1,halfDays=Math.floor(days/2);
+  if(!halfDays)return {...r,days,halfDays};
+  const firstFrom=r.from,firstTo=addDays(r.from,halfDays-1),lastFrom=addDays(r.to,1-halfDays),lastTo=r.to;
+  const summarize=ss=>({sessions:ss.length,sets:setsOf(ss).length,
+    volume:ss.reduce((n,s)=>n+s.volume,0),perSession:ss.length?ss.reduce((n,s)=>n+s.volume,0)/ss.length:null});
+  return {...r,days,halfDays,firstFrom,firstTo,lastFrom,lastTo,
+    first:summarize(scopedSessions(firstFrom,firstTo)),last:summarize(scopedSessions(lastFrom,lastTo))};
 }
 function renderComparison() {
-  const host=document.getElementById("comparison"), note=document.getElementById("comparison-note"); host.textContent="";
-  const c=comparisonData(); if(!c) {note.textContent="Keine Daten vorhanden.";return;}
-  note.textContent=(state.range==="all" ? "Letzte 28 Tage im Export" : c.days+" Tage")+": "+fDate(c.from)+" – "+fDate(c.to)+". Vergleich: "+fDate(c.previousFrom)+" – "+fDate(c.previousTo)+". Gleiche Split-Auswahl für beide Zeiträume.";
-  if(!c.covered) note.textContent += " Der Export deckt den Vergleichszeitraum nicht vollständig ab; deshalb keine Änderungsrate.";
+  const host=document.getElementById("comparison"),note=document.getElementById("comparison-note");host.textContent="";
+  const c=comparisonData();if(!c){note.textContent="Keine Daten vorhanden.";return;}
+  if(!c.halfDays){note.textContent="Für Anfang und Ende sind mindestens zwei Tage in deiner Auswahl nötig.";return;}
+  note.textContent="Innerhalb deiner Auswahl: Anfang "+fDate(c.firstFrom)+" – "+fDate(c.firstTo)+" → Ende "+fDate(c.lastFrom)+" – "+fDate(c.lastTo)+". Jeweils "+c.halfDays+" Tage.";
+  if(c.days%2)note.textContent+=" Der mittlere Tag bleibt für diesen Vergleich gleich langer Abschnitte außen vor.";
   [{key:"sessions",label:"Einheiten",fmt:de},{key:"sets",label:"Sätze",fmt:de},{key:"volume",label:"Volumen",fmt:fVol},{key:"perSession",label:"Ø Volumen / Einheit",fmt:fVol}].forEach(m=>{
-    const a=c.current[m.key],b=c.previous[m.key], item=el("div","comparison-item");
-    item.appendChild(el("div","lbl",m.label)); item.appendChild(el("strong","val",a===null ? "—" : m.fmt(a)));
-    item.appendChild(el("div","detail",c.covered ? "Vorher: "+(b===null ? "—" : m.fmt(b)) : "Vorher: unvollständige Historie"));
+    const a=c.last[m.key],b=c.first[m.key],item=el("div","comparison-item");
+    item.appendChild(el("div","lbl",m.label+" · am Ende"));item.appendChild(el("strong","val",a===null?"—":m.fmt(a)));
+    item.appendChild(el("div","detail","Am Anfang: "+(b===null?"—":m.fmt(b))));
     let change="Nicht vergleichbar";
-    if(c.covered && a!==null && b>0) {const pct=(a-b)/b*100;change=(pct>0?"+":"")+de(pct,1,1)+" %";}
-    else if(c.covered && b===0 && a!==null) change=a===0?"Unverändert":"Keine Basis für %";
+    if(a!==null && b>0)change=signedPercent((a-b)/b*100);
+    else if(b===0 && a!==null)change=a===0?"Unverändert":"Keine Basis für %";
     item.appendChild(el("span","change",change));host.appendChild(item);
   });
 }
@@ -2676,73 +2672,55 @@ const PROGRESS_STATUS = {
 };
 const signedPercent = v => (v>0?"+":"") + de(v,1,1) + " %";
 const isPeriodMode = (mode=state.progressMode) => mode==="weeks" || mode==="custom";
-const progressModeLabel = () => isPeriodMode() ? "Gewählter Zeitraum gegen gleich langen Vorzeitraum"
-  : state.progressMode === "recent" ? "Jüngste gegen vorherige Einheiten · bis zu 3 je Gruppe" : "Jüngste gegen erste Einheiten · bis zu 3 je Gruppe";
+const progressModeLabel = () => state.progressMode === "recent"
+  ? "Jüngste gegen vorherige Einheiten innerhalb deiner Auswahl" : "Anfang → Ende innerhalb deiner Auswahl";
 function progressWindow() {
   const r=activeRange(); if(!r.from || !r.to) return null;
   const days=daysBetween(r.from,r.to)+1;
-  return {...r,days,previousFrom:addDays(r.from,-days),previousTo:addDays(r.from,-1)};
+  return {...r,days};
 }
 function progressMedian(points) {
   const values=points.map(p=>p.value).sort((a,b)=>a-b), mid=Math.floor(values.length/2);
   return values.length%2 ? values[mid] : (values[mid-1]+values[mid])/2;
 }
-function exerciseTrend(ss, name, mode = state.progressMode, window = isPeriodMode(mode)?progressWindow():null, allowFallback=state.progressFallback) {
-  const points = exerciseSessions(ss,name).map(e=>{
-    const eligible = e.sets.filter(s=>!s.failed && s.reps>=1 && s.reps<=10 && s.weight>0);
-    if (!eligible.length) return null;
-    const best = eligible.reduce((a,b)=>b.e1rm>a.e1rm?b:a);
-    return {date:e.date, start:best.start, split:e.split, value:best.e1rm, weight:best.weight, reps:best.reps};
+function exerciseTrend(ss,name,mode=state.progressMode,window=isPeriodMode(mode)?progressWindow():null) {
+  // Die Datumsgrenze gilt vor der Auswahl beider Gruppen, auch bei wenig Historie.
+  const inRange=isPeriodMode(mode)?ss.filter(s=>window && s.date>=window.from && s.date<=window.to):ss;
+  const points=exerciseSessions(inRange,name).map(e=>{
+    const eligible=e.sets.filter(s=>!s.failed && s.reps>=1 && s.reps<=10 && s.weight>0);
+    if(!eligible.length)return null;
+    const best=eligible.reduce((a,b)=>b.e1rm>a.e1rm?b:a);
+    return {date:e.date,start:best.start,split:e.split,value:best.e1rm,weight:best.weight,reps:best.reps};
   }).filter(Boolean);
-  let before,after,fallback=false;
-  if(isPeriodMode(mode)) {
-    before=window?points.filter(p=>p.date>=window.previousFrom && p.date<=window.previousTo):[];
-    after=window?points.filter(p=>p.date>=window.from && p.date<=window.to):[];
-    // Keine Trainingspause als Rückgang lesen: die Ersatzbasis wird sichtbar datiert.
-    if(window && after.length && !before.length && allowFallback) {
-      before=points.filter(p=>p.date<window.previousFrom && daysBetween(p.date,window.from)<=90).slice(-1);
-      fallback=before.length>0;
-    }
-  } else {
-    const size=Math.min(3,Math.floor(points.length/2));
-    before=size ? (mode==="start" ? points.slice(0,size) : points.slice(-size*2,-size)) : [];
-    after=size ? points.slice(-size) : points;
-  }
-  const selected=isPeriodMode(mode)?before.concat(after):points;
-  const result={count:selected.length,points:selected,mode,window,fallback,
-    beforeCount:before.length,afterCount:after.length,lastDate:after.length?after[after.length-1].date:null};
-  if(!before.length || !after.length) return result;
+  const size=Math.min(3,Math.floor(points.length/2));
+  const before=size?(mode==="recent"?points.slice(-size*2,-size):points.slice(0,size)):[];
+  const after=size?points.slice(-size):points;
+  const result={count:points.length,points,mode,window,beforeCount:before.length,afterCount:after.length,
+    lastDate:points.length?points[points.length-1].date:null};
+  if(!size)return result;
   const first=progressMedian(before),last=progressMedian(after);
   return {...result,before,after,first,last,pct:(last-first)/first*100};
 }
 function exerciseAssessment(ss,name,mode=state.progressMode,anchor=activeRange().to) {
-  // Die Referenz liegt außerhalb des aktiven Datumsfilters, behält aber dieselben Splits.
-  const source=isPeriodMode(mode)?scopedSessions(null,null):ss;
-  const trend=exerciseTrend(source,name,mode);
-  const bodyweight = /klimm|pull.?up|chin.?up|\bdips?\b/i.test(name) ||
-    setsOf(source).some(s=>s.exercise===name && /body.?weight|körpergewicht/i.test(s.equipment));
-  const partialHistory=isPeriodMode(mode) && trend.window && DATA.sessions.length>0 && DATA.sessions[0].date>trend.window.previousFrom;
-  const confidence=trend.beforeCount>=3 && trend.afterCount>=3 && !trend.fallback && !partialHistory ? "solid" : "early";
-  let status="unclear", reason="", label="Noch kein Vergleich";
-  if (trend.pct===undefined) {
-    if(isPeriodMode(mode)) {
-      label=trend.afterCount?"Keine Vergleichseinheit":"Keine geeigneten Sätze";
-      reason=trend.afterCount
-        ? "Für diese Auswahl fehlt eine frühere geeignete Einheit. Zeitraum anpassen oder den Ersatzvergleich bei Trainingspausen aktivieren."
-        : "Im gewählten Zeitraum fehlen erfolgreiche Sätze mit 1–10 Wiederholungen.";
-    } else reason="Bisher "+trend.count+" geeignete Einheit(en). Ab zwei getrennten Einheiten ist eine erste Tendenz möglich.";
-  } else if (bodyweight) { label="Körpergewicht beachten";reason="Die Last kann sich mit deinem Körpergewicht ändern."; }
-  else if (anchor && daysBetween(trend.lastDate,anchor)>28) {
+  const trend=exerciseTrend(ss,name,mode);
+  const bodyweight=/klimm|pull.?up|chin.?up|\bdips?\b/i.test(name) ||
+    setsOf(ss).some(s=>s.exercise===name && /body.?weight|körpergewicht/i.test(s.equipment));
+  const confidence=trend.beforeCount>=3 && trend.afterCount>=3?"solid":"early";
+  let status="unclear",reason="",label="Noch kein Vergleich";
+  if(trend.pct===undefined) {
+    label=trend.count?"Erst eine Einheit":"Keine geeigneten Sätze";
+    reason=trend.count?"Erst eine geeignete Einheit in deiner Auswahl. Für eine Entwicklung brauchst du mindestens zwei."
+      :"Im gewählten Zeitraum fehlen erfolgreiche Sätze mit 1–10 Wiederholungen.";
+  } else if(bodyweight) {label="Körpergewicht beachten";reason="Die Last kann sich mit deinem Körpergewicht ändern.";}
+  else if(anchor && daysBetween(trend.lastDate,anchor)>28) {
     label="Älterer Vergleich";reason="Letzter geeigneter Satz am "+fDate(trend.lastDate)+" – mehr als 28 Tage vor dem Zeitraumende.";
   } else {
     status=trend.pct>PROGRESS_BAND?"up":trend.pct < -PROGRESS_BAND?"down":"stable";
     label=PROGRESS_STATUS[status].label;
-    reason=status==="stable"?"Änderung innerhalb von ±2,5 %.":"Geschätzte Kraft aus deinen protokollierten Sätzen.";
-    if(confidence==="early") reason+=" Erste Tendenz: "+trend.beforeCount+" Einheit(en) davor, "+trend.afterCount+" im aktuellen Abschnitt. Einzelne gute oder schlechte Tage haben hier mehr Einfluss.";
-    if(partialHistory) reason+=" Der Export deckt den Vorzeitraum nur teilweise ab; verglichen werden die vorhandenen Einheiten.";
+    reason=status==="stable"?"Die geschätzte Kraft liegt innerhalb von ±2,5 % etwa gleichauf.":"Entwicklung deiner geschätzten Kraft innerhalb der Auswahl.";
+    if(confidence==="early")reason+=" Erste Tendenz aus "+(trend.beforeCount+trend.afterCount)+" Einheiten. Einzelne gute oder schlechte Tage haben hier mehr Einfluss.";
   }
-  if(trend.fallback) reason+=" Ersatzvergleich: letzte geeignete Einheit davor am "+fDate(trend.before[0].date)+", weil im direkten Vorzeitraum keine vorliegt.";
-  return {...trend,name,status,label,reason,bodyweight,confidence,partialHistory};
+  return {...trend,name,status,label,reason,bodyweight,confidence};
 }
 
 function applyProgressPeriod(form) {
@@ -2760,7 +2738,6 @@ function applyProgressPeriod(form) {
     state.from=from;state.to=to;
     dFrom.max=to;dTo.min=from;
   }
-  if(form.elements.fallback) state.progressFallback=form.elements.fallback.checked;
   state.range=mode;state.progressMode=mode;state.progressExpanded=false;
   render();
   const container=state.view==="exercises"?"#ex-insight":"#progress-period";
@@ -2782,18 +2759,16 @@ function renderPeriodControls(host) {
     }
   }
   const button=el("button","primary-action","Zeitraum anwenden");button.type="submit";form.appendChild(button);
-  const options=el("label","period-options"),fallback=el("input");fallback.type="checkbox";fallback.name="fallback";fallback.checked=state.progressFallback;
-  options.append(fallback,document.createTextNode("Bei Trainingspausen letzte Einheit davor vergleichen (höchstens 90 Tage zurück)."));form.appendChild(options);
   const error=el("p","form-error");error.setAttribute("role","status");form.appendChild(error);
   form.addEventListener("submit",e=>{e.preventDefault();applyProgressPeriod(form);});box.appendChild(form);
   const r=progressWindow();
   if(r) {
-    const pair=el("div","period-windows");
-    for(const [label,from,to] of [["Dein Zeitraum",r.from,r.to],["Direkter Vorzeitraum",r.previousFrom,r.previousTo]]) {
-      const item=el("div");item.append(el("span",null,label),el("strong",null,fDate(from)+" – "+fDate(to)));pair.appendChild(item);
-    }
-    box.appendChild(pair);
-    box.appendChild(el("p","period-hint",r.days+" Tage pro Abschnitt · Ab einer geeigneten Einheit je Seite als erste Tendenz; ab drei je Seite über mehrere Einheiten gestützt. Der gewählte Zeitraum gilt für die gesamte Auswertung."));
+    const scope=el("div","period-scope");
+    scope.append(el("span",null,"Deine Auswahl · "+r.days+" Tage"),el("strong",null,fDate(r.from)+" – "+fDate(r.to)));
+    box.appendChild(scope);
+    const flow=el("div","period-flow");
+    flow.append(el("span",null,"Am Anfang"),el("span","period-arrow","→"),el("span",null,"Am Ende"));box.appendChild(flow);
+    box.appendChild(el("p","period-hint","Deine ersten und letzten Einheiten in dieser Auswahl zeigen, wie du dich entwickelt hast."));
   }
   host.appendChild(box);
 }
@@ -2850,7 +2825,7 @@ function renderProgressOverview(ss) {
   show.forEach(a=>{
     const row=el("button","progress-row "+a.status);row.dataset.exercise=a.name;
     const identity=el("span","progress-identity");identity.appendChild(el("strong",null,a.name));
-    identity.appendChild(el("span","progress-row-meta",a.status==="unclear"?a.reason:a.fallback?"Ersatzvergleich mit "+fDate(a.before[0].date)+" · aktuelle Einheit "+fDate(a.lastDate):a.beforeCount+" Einheiten davor · "+a.afterCount+" danach · zuletzt "+fDate(a.lastDate)));row.appendChild(identity);
+    identity.appendChild(el("span","progress-row-meta",a.status==="unclear"?a.reason:fKg(a.first)+" → "+fKg(a.last)+" geschätztes 1RM · "+a.count+" Einheiten in der Auswahl"));row.appendChild(identity);
     const middle=el("span","progress-track");
     if(a.status!=="unclear") {
       const svg=sv("svg",{viewBox:"0 0 240 24",height:24,"aria-hidden":"true",preserveAspectRatio:"none"});
@@ -2876,8 +2851,8 @@ function renderProgressOverview(ss) {
   const table=document.getElementById("progress-table");table.textContent="";
   table.appendChild(buildTable([
     {label:"Übung",txt:true,cell:a=>a.name},{label:"Einordnung",txt:true,cell:a=>a.label},
-    {label:"Geeignete Einheiten",cell:a=>a.count},{label:"Referenz 1RM",cell:a=>a.first===undefined?"—":fKg(a.first)},
-    {label:"Zuletzt 1RM",cell:a=>a.last===undefined?"—":fKg(a.last)},
+    {label:"Geeignete Einheiten",cell:a=>a.count},{label:state.progressMode==="recent"?"Vorheriges 1RM":"1RM am Anfang",cell:a=>a.first===undefined?"—":fKg(a.first)},
+    {label:state.progressMode==="recent"?"Jüngstes 1RM":"1RM am Ende",cell:a=>a.last===undefined?"—":fKg(a.last)},
     {label:"Änderung",cell:a=>a.status==="unclear"?"—":signedPercent(a.pct)},
     {label:"Datenbasis",txt:true,cell:a=>a.status==="unclear"?"Nicht vergleichbar":a.confidence==="early"?"Erste Tendenz":"Mehrere Einheiten"},
     {label:"Hinweis",txt:true,cell:a=>a.reason}
@@ -2899,18 +2874,18 @@ function renderExerciseInsight(ss,name) {
   host.appendChild(el("p","verdict-reason",a.reason));
   if(a.pct!==undefined) {
     const pair=el("div","verdict-pair");
-    for(const [samples,value,label] of [[a.before,a.first,a.fallback?"Letzte Einheit davor":isPeriodMode()?"Vorheriger Zeitraum":state.progressMode==="recent"?"Vorherige":"Erste"],[a.after,a.last,isPeriodMode()?"Gewählter Zeitraum":"Jüngste"]]) {
+    for(const [samples,value,label] of [[a.before,a.first,state.progressMode==="recent"?"Vorherige Einheiten":"Am Anfang"],[a.after,a.last,state.progressMode==="recent"?"Jüngste Einheiten":"Am Ende"]]) {
       const block=el("div");block.appendChild(el("span",null,label+" · "+samples.length+(samples.length===1?" Einheit":" Einheiten")));block.appendChild(el("strong",null,fKg(value)));
-      block.appendChild(el("small",null,fDate(samples[0].date)+" – "+fDate(samples[samples.length-1].date)));pair.appendChild(block);
+      block.appendChild(el("small",null,samples[0].date===samples[samples.length-1].date?fDate(samples[0].date):fDate(samples[0].date)+" – "+fDate(samples[samples.length-1].date)));pair.appendChild(block);
     }
     host.appendChild(pair);
     const details=el("details","data-table");details.appendChild(el("summary",null,"Die "+(a.before.length+a.after.length)+" Vergleichseinheiten ansehen"));
     const table=el("div","tbl-wrap");table.tabIndex=0;
     table.appendChild(buildTable([
-      {label:"Fenster",txt:true,cell:p=>p.group},{label:"Datum",txt:true,cell:p=>fDate(p.date)+" · "+p.start.slice(11,16)},
+      {label:"Abschnitt",txt:true,cell:p=>p.group},{label:"Datum",txt:true,cell:p=>fDate(p.date)+" · "+p.start.slice(11,16)},
       {label:"Split",txt:true,cell:p=>p.split},{label:"Satz",cell:p=>fKg(p.weight)+" × "+p.reps},
       {label:"1RM geschätzt",cell:p=>fKg(p.value)}
-    ],a.before.map(p=>({...p,group:"Referenz"})).concat(a.after.map(p=>({...p,group:"Zuletzt"})))));
+    ],a.before.map(p=>({...p,group:state.progressMode==="recent"?"Vorherige":"Anfang"})).concat(a.after.map(p=>({...p,group:state.progressMode==="recent"?"Jüngste":"Ende"})))));
     details.appendChild(table);host.appendChild(details);
   }
   host.appendChild(el("p","method-note","Je Einheit zählt der höchste Epley-Schätzwert aus erfolgreichen Sätzen mit 1–10 Wiederholungen. Verglichen wird der Median der Werte je Abschnitt; bei einer geraden Anzahl ist das der Durchschnitt der beiden mittleren Werte. ±2,5 % gilt hier als etwa gleich, nicht als bewiesene Veränderung. Technik, Satzreihenfolge und Trainingsbedingungen können abweichen."));
@@ -2919,7 +2894,7 @@ function renderExerciseInsight(ss,name) {
 
 function renderProgressHistory(ss,names) {
   const grid=document.getElementById("ex-compare");grid.textContent="";
-  document.getElementById("ex-compare-note").textContent=progressModeLabel()+". Mini-Verlauf der Vergleichseinheiten; 100 entspricht dem Median der Referenz. Übungen antippen für Details.";
+  document.getElementById("ex-compare-note").textContent=progressModeLabel()+". Die Linie zeigt die Vergleichseinheiten; 100 steht für die geschätzte Kraft am Anfang des Vergleichs. Übungen antippen für Details.";
   const all=names.map(name=>exerciseAssessment(ss,name)).filter(a=>a.pct!==undefined);
   if(!all.length)grid.appendChild(el("div","empty","Noch keine Übung mit geeigneten Einheiten auf beiden Seiten. Einen anderen Zeitraum wählen."));
   all.sort((a,b)=>(a.status==="unclear")-(b.status==="unclear") || b.pct-a.pct).forEach(a=>{
@@ -2927,7 +2902,7 @@ function renderProgressHistory(ss,names) {
     card.appendChild(progressBadge(a));card.appendChild(el("strong","small-percent",a.status==="unclear"?"Vergleich mit Vorbehalt":signedPercent(a.pct)));
     const chart=el("div","chart");card.appendChild(chart);grid.appendChild(card);
     const pts=a.before.concat(a.after).map(p=>({y:p.value/a.first*100,label:fDate(p.date),extra:[{name:"1RM geschätzt",value:fKg(p.value)}]}));
-    sparkline(chart,pts,{base:100,fmt:v=>de(v),unit:"Index (Referenz = 100)"});
+    sparkline(chart,pts,{base:100,fmt:v=>de(v),unit:"Index (Anfang = 100)"});
   });
 }
 

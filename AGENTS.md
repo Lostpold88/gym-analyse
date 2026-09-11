@@ -81,11 +81,13 @@ Alles hier ist am echten Export aufgetreten, nicht theoretisch:
   jeder Aggregation, auch beim CSV-Import. Aktuell: Hammer Curls (KH),
   JM-Press (Multipresse), Beinpresse (Sitzend). Die ausgeschlossene Satzzahl
   bleibt in der Fußzeile sichtbar. Den Rohexport nicht dafür kürzen.
-- **Kraftvergleich bei wenigen Daten:** Schon je eine geeignete Einheit
-  erlaubt eine sichtbar vorläufige Tendenz. Ab drei je Seite wird der Median
-  über mehrere Einheiten gestützt. Ein optionaler Ersatzvergleich bei leeren
-  Vorzeiträumen muss sein tatsächliches Datum nennen; niemals die ältere
-  Einheit still in den angezeigten direkten Vorzeitraum umdatieren.
+- **Kraftvergleich innerhalb der Auswahl:** Wochen- und Datumsmodus vergleichen
+  die ersten mit den letzten geeigneten Einheiten ausschließlich innerhalb
+  des gewählten Zeitraums. Keine Vergleichsdaten davor, keine Ersatzbasis.
+  Je Gruppe bis zu drei Einheiten ohne Überschneidung; bei weniger Daten je
+  eine oder zwei als sichtbare „Erste Tendenz“. Eine einzelne Einheit in der
+  gesamten Auswahl reicht nicht aus. Auch die Mengenvergleiche bleiben in
+  der Auswahl; Anfang und Ende verwenden dort gleich lange Tagesabschnitte.
 
 ## Prüfen vor dem Abschluss
 

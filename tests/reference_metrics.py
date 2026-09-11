@@ -28,10 +28,13 @@ def metrics(data):
 
 
 last = date.fromisoformat(max(r["StartTime"][:10] for r in rows))
-start = last - timedelta(days=27)
-previous_start = start - timedelta(days=28)
-current = [r for r in rows if start.isoformat() <= r["StartTime"][:10] <= last.isoformat()]
-previous = [r for r in rows if previous_start.isoformat() <= r["StartTime"][:10] < start.isoformat()]
+first_date = date.fromisoformat(min(r["StartTime"][:10] for r in rows))
+half_days = ((last - first_date).days + 1) // 2
+first_end = first_date + timedelta(days=half_days - 1)
+last_start = last - timedelta(days=half_days - 1)
+first_half = [r for r in rows if first_date.isoformat() <= r["StartTime"][:10] <= first_end.isoformat()]
+last_half = [r for r in rows if last_start.isoformat() <= r["StartTime"][:10] <= last.isoformat()]
+
 muscles = defaultdict(int)
 for row in rows:
     if row.get("Categories"):
@@ -74,24 +77,17 @@ for label, current_start, current_end, split in [
     ("custom", date(2026, 7, 20), date(2026, 8, 16), None),
 ]:
     days = (current_end - current_start).days + 1
-    previous_from = current_start - timedelta(days=days)
-    previous_to = current_start - timedelta(days=1)
-    covered = min(r["StartTime"][:10] for r in rows) <= previous_from.isoformat()
     names = {r["Exercise"] for r in rows if current_start.isoformat() <= r["StartTime"][:10] <= current_end.isoformat() and (not split or r["Name"] == split)}
     assessments = {}
     for name in names:
-        points = sorted((key, value) for key, value in eligible[name].items() if not split or key[1] == split)
-        before = [(key, value) for key, value in points if previous_from.isoformat() <= key[0][:10] <= previous_to.isoformat()]
-        after = [(key, value) for key, value in points if current_start.isoformat() <= key[0][:10] <= current_end.isoformat()]
-        fallback = False
-        if not before and after:
-            candidates = [(key, value) for key, value in points if key[0][:10] < previous_from.isoformat()
-                          and (current_start - date.fromisoformat(key[0][:10])).days <= 90]
-            before = candidates[-1:]
-            fallback = bool(before)
-        result = {"count": len(before) + len(after), "beforeCount": len(before), "afterCount": len(after), "status": "unclear",
-                  "fallback": fallback, "confidence": "solid" if len(before) >= 3 and len(after) >= 3 and covered and not fallback else "early"}
-        if before and after:
+        points = sorted((key, value) for key, value in eligible[name].items()
+                        if current_start.isoformat() <= key[0][:10] <= current_end.isoformat() and (not split or key[1] == split))
+        size = min(3, len(points) // 2)
+        before = points[:size]
+        after = points[-size:] if size else points
+        result = {"count": len(points), "beforeCount": len(before), "afterCount": len(after), "status": "unclear",
+                  "confidence": "solid" if size == 3 else "early"}
+        if size:
             first_value, last_value = median(v for _, v in before), median(v for _, v in after)
             pct = (last_value - first_value) / first_value * 100
             if name not in bodyweight and (current_end - date.fromisoformat(after[-1][0][0][:10])).days <= 28:
@@ -99,8 +95,7 @@ for label, current_start, current_end, split in [
             result.update(first=first_value, last=last_value, pct=pct,
                           before=[list(k) for k, _ in before], after=[list(k) for k, _ in after])
         assessments[name] = result
-    periods[label] = {"from": current_start.isoformat(), "to": current_end.isoformat(), "days": days,
-                      "previousFrom": previous_from.isoformat(), "previousTo": previous_to.isoformat(), "assessments": assessments}
+    periods[label] = {"from": current_start.isoformat(), "to": current_end.isoformat(), "days": days, "assessments": assessments}
 
 weights = defaultdict(lambda: defaultdict(dict))
 for row in rows:
@@ -120,8 +115,8 @@ for exercise, by_weight in weights.items():
         progress[exercise].append({"weight": weight, "first": point(ordered[0]),
                                    "last": point(ordered[-1]), "count": len(ordered),
                                    "delta": ordered[-1][1] - ordered[0][1] if len(ordered) > 1 else None})
-out.write_text(json.dumps({"total": metrics(rows), "current": metrics(current),
-                           "previous": metrics(previous), "muscles": dict(muscles),
+out.write_text(json.dumps({"total": metrics(rows), "first": metrics(first_half),
+                           "last": metrics(last_half), "muscles": dict(muscles),
                            "progress": progress, "trends": trends, "periods": periods,
                            "excludedSets": excluded_sets}), encoding="utf-8")
 print("Unabhängige Referenzwerte erzeugt.")

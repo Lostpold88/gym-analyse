@@ -62,12 +62,11 @@ Jedes Diagramm hat eine gleichwertige Tabellenansicht.
 
 ## Vergleiche und mobile Nutzung
 
-- **Zeitraumvergleich:** Einheiten, Sätze, Volumen und Volumen je Einheit
-  werden mit einem unmittelbar vorhergehenden, gleich langen Zeitraum
-  verglichen. Bei „Alles“ sind das die letzten 28 gegen die vorherigen
-  28 Tage. Bezugspunkt ist das letzte Training im Export, nicht der heutige
-  Tag. Die Split-Auswahl gilt für beide Fenster. Beginnt die vorhandene
-  Historie erst im Vergleichsfenster, wird keine Prozentänderung ausgewiesen.
+- **Trainingsmenge:** Einheiten, Sätze, Volumen und Volumen je Einheit werden
+  zwischen dem Anfang und Ende der gewählten Auswahl verglichen. Dafür werden
+  gleich viele Tage am Anfang und Ende verwendet. Bei einer ungeraden Tageszahl
+  bleibt der mittlere Tag für diesen Vergleich außen vor; das steht an der Karte.
+  Auch hier fließen ausschließlich Daten innerhalb des gewählten Zeitraums ein.
 - **Kraftentwicklung:** „Zuletzt“ vergleicht die letzten drei mit den
   unmittelbar vorherigen drei geeigneten Einheiten. „Seit Beginn“ vergleicht
   die letzten drei mit den ersten drei im gewählten Zeitraum. Die Fenster
@@ -80,20 +79,17 @@ Jedes Diagramm hat eine gleichwertige Tabellenansicht.
 - **Eigener Kraftvergleich:** „Letzte X Wochen“ erlaubt 1–104 ganze Wochen,
   gerechnet bis zum letzten Training im Export. „Eigener Zeitraum“ erlaubt
   Start- und Enddatum einschließlich beider Tage. Beide Modi vergleichen
-  den gewählten Abschnitt mit dem unmittelbar vorherigen, gleich langen
-  Abschnitt. Alle geeigneten Einheiten pro Abschnitt gehen in den Median ein;
-  mindestens eine je Abschnitt ist erforderlich. Bei einer geraden Anzahl
-  wird der Durchschnitt der beiden mittleren Werte verwendet. Die Referenz
-  behält die Split-Auswahl, liegt aber außerhalb des aktiven Datumsfilters.
-  Beide Zeiträume werden sichtbar ausgewiesen. Die Datumsauswahl gilt für
-  alle Ansichten; ungültige Eingaben ändern die letzte gültige Auswahl nicht.
-- **Datenbasis und Trainingspausen:** Weniger als drei Einheiten auf einer
-  Seite oder eine unvollständige Vergleichshistorie werden sichtbar als
-  „Erste Tendenz“ gekennzeichnet, statt einen vorhandenen Vergleich zu
-  verbergen. Fehlt im direkten Vorzeitraum eine geeignete Einheit, kann die
-  letzte geeignete Einheit davor einspringen, höchstens 90 Tage vor dem
-  gewählten Abschnitt. Diese Ersatzbasis erscheint mit Datum in der Liste,
-  in den Übungsdetails und in der Tabelle. Die Option ist abschaltbar.
+  die ersten mit den letzten geeigneten Einheiten **innerhalb dieser Auswahl**:
+  „Letzte 6 Wochen“ zeigt die Entwicklung vom Anfang zum Ende dieser sechs Wochen.
+  Je Gruppe werden bis zu drei Einheiten genutzt; bei weniger Historie je eine
+  oder zwei. Die Gruppen überschneiden sich nicht. Ihr Median liefert Anfangs-
+  und Endwert; bei zwei Werten zählt deren Durchschnitt. Es werden keine
+  früheren Vergleichs- oder Ersatzdaten herangezogen. Die Datumsauswahl gilt
+  für alle Ansichten; ungültige Eingaben ändern die letzte gültige Auswahl nicht.
+- **Wenig Daten:** Ab zwei getrennten geeigneten Einheiten in der Auswahl
+  ist eine „Erste Tendenz“ möglich. Mit nur einer Einheit gibt es noch keine
+  Entwicklung; die Anzeige benennt das ausdrücklich. Ab drei Einheiten je
+  Gruppe ist der Vergleich über mehrere Einheiten gestützt.
 - **Einordnung:** Über +2,5 % wird „Verbessert“, unter −2,5 % „Zurückgegangen“
   angezeigt; dazwischen „Etwa gleich“. Das ist eine Orientierung für die
   Anzeige, keine statistische Signifikanzschwelle. Körpergewichtsübungen,

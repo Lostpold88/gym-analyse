@@ -11,12 +11,16 @@ const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`);
 async function checkPeriod(page,key) {
   const expected=reference.periods[key];
   const actual=await page.evaluate(()=>({window:progressWindow(),assessments:progressAssessments(filtered()),dates:filtered().map(s=>s.date)}));
-  for(const field of ['from','to','previousFrom','previousTo','days'])assert.equal(actual.window[field],expected[field]);
+  for(const field of ['from','to','days'])assert.equal(actual.window[field],expected[field]);
   assert.deepEqual(actual.assessments.map(a=>a.name).sort(),Object.keys(expected.assessments).sort());
   assert.ok(actual.dates.every(d=>d>=expected.from && d<=expected.to));
   for(const a of actual.assessments) {
     const e=expected.assessments[a.name];
-    for(const field of ['count','beforeCount','afterCount','status','confidence','fallback'])assert.equal(a[field],e[field],`${key}, ${a.name}, ${field}`);
+    assert.ok(a.points.every(p=>p.date>=expected.from && p.date<=expected.to));
+    assert.ok((a.before||[]).concat(a.after||[]).every(p=>p.date>=expected.from && p.date<=expected.to));
+    const starts=new Set((a.before||[]).map(p=>p.start+'|'+p.split));
+    assert.ok((a.after||[]).every(p=>!starts.has(p.start+'|'+p.split)));
+    for(const field of ['count','beforeCount','afterCount','status','confidence'])assert.equal(a[field],e[field],`${key}, ${a.name}, ${field}`);
     if(e.pct===undefined)assert.equal(a.pct,undefined);
     else {
       for(const field of ['first','last','pct'])near(a[field],e[field]);
@@ -51,16 +55,12 @@ async function checkPeriod(page,key) {
       await page.locator('#filter-panel > summary').click();
       await page.locator('#split-chips .chip').filter({hasText:/^Push/}).click();
       await checkPeriod(page,'weeks1Push');
-      assert.ok(await page.evaluate(()=>progressAssessments(filtered()).some(a=>a.status!=='unclear')));
+      assert.equal(await page.evaluate(()=>progressAssessments(filtered()).every(a=>a.pct===undefined)),true);
       await page.locator('#filter-panel > summary').click();
       await page.evaluate(()=>document.documentElement.dataset.theme='dark');
       await page.locator('#progress-overview').screenshot({path:path.join(root,`.qa/short-weeks-${engineName}-${width}.png`),animations:'disabled'});
-      await page.locator('#progress-period [name="fallback"]').uncheck();
-      await page.locator('#progress-period button[type="submit"]').click();
-      assert.equal(await page.evaluate(()=>progressAssessments(filtered()).some(a=>a.fallback)),false);
-      await page.locator('#progress-period [name="fallback"]').check();
-      await page.locator('#progress-period button[type="submit"]').click();
-      await checkPeriod(page,'weeks1Push');
+      assert.equal(await page.locator('[name="fallback"]').count(),0);
+      assert.doesNotMatch(await page.locator('#progress-overview').innerText(),/Vorzeitraum|Ersatzvergleich/);
       await page.locator('#filter-panel > summary').click();
       await page.locator('#split-chips .chip').filter({hasText:/^Push/}).click();
       await page.locator('#filter-panel > summary').click();
@@ -70,7 +70,7 @@ async function checkPeriod(page,key) {
       await page.evaluate(name=>openExercise(name),chosen);
       assert.equal(await page.locator('#ex-insight [name="weeks"]').inputValue(),'6');
       await page.locator('#ex-insight details > summary').click();
-      assert.equal(await page.locator('#ex-insight tbody tr').count(),reference.periods.weeks6.assessments[chosen].count);
+      assert.equal(await page.locator('#ex-insight tbody tr').count(),reference.periods.weeks6.assessments[chosen].before.length+reference.periods.weeks6.assessments[chosen].after.length);
       // Der Datumsmodus ist auch direkt aus der Übungsansicht nutzbar.
       await page.locator('#ex-insight [data-progress-mode="custom"]').click();
       const from=page.locator('#ex-insight [name="from"]'),to=page.locator('#ex-insight [name="to"]');
@@ -100,7 +100,7 @@ async function checkPeriod(page,key) {
         await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
         await page.locator('#progress-overview').screenshot({path:path.join(root,`.qa/period-${engineName}-${width}-${theme}.png`)});
       }
-      // Die Split-Auswahl gilt ebenso für die außerhalb des Datumsfilters liegende Referenz.
+      // Beide Vergleichsgruppen bleiben innerhalb derselben Split- und Datumsauswahl.
       await page.locator('#filter-panel > summary').click();
       await page.locator('#split-chips .chip').first().click();
       assert.equal(await page.evaluate(()=>progressAssessments(filtered()).every(a=>(a.before||[]).concat(a.after||[]).every(p=>state.splits.has(p.split)))),true);
@@ -109,40 +109,39 @@ async function checkPeriod(page,key) {
       assert.equal(await page.locator('#progress-period [name="weeks"]').inputValue(),'4');
       await page.locator('#reset-filters').click();
       assert.equal(await page.evaluate(()=>state.progressMode),'recent');
-      // Ein großer Zeitraum darf eine unvollständige Historie nicht als Rückgang einordnen.
+      // Auch ein weit gefasster Zeitraum nutzt nur vorhandene Einheiten innerhalb der Auswahl.
       await page.locator('#progress-overview [data-progress-mode="weeks"]').click();
       await page.locator('#progress-period [name="weeks"]').fill('104');await page.locator('#progress-period button[type="submit"]').click();
-      assert.equal(await page.evaluate(()=>progressAssessments(filtered()).every(a=>a.status==='unclear')),true);
+      assert.equal(await page.evaluate(()=>progressAssessments(filtered()).some(a=>a.status!=='unclear')),true);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
       const edgeCases=await page.evaluate(()=>{
-        const csv='Name,StartTime,Exercise,Reps,Weight,Status\n'+[50,60,70,900,70,80,90,100,999].map((w,i)=>'Push,2026-01-'+String(i+1).padStart(2,'0')+'T12:00:00Z,Test,5,'+w+',Done').join('\n');
-        const ss=buildData(csv).sessions;
-        const window={previousFrom:'2026-01-01',previousTo:'2026-01-04',from:'2026-01-05',to:'2026-01-08'};
-        const even=exerciseTrend(ss,'Test','custom',window);
-        const sparse=exerciseTrend(ss,'Test','custom',{...window,previousFrom:'2026-01-04'});
-        const boundary=exerciseTrend(ss,'Test','custom',{...window,from:'2026-01-04',previousTo:'2026-01-03'});
-        const gapWindow={...window,previousFrom:'2026-01-02'};
-        const gap=exerciseTrend([ss[0],ss[4]],'Test','custom',gapWindow,true);
-        const strict=exerciseTrend([ss[0],ss[4]],'Test','custom',gapWindow,false);
+        const csv='Name,StartTime,Exercise,Reps,Weight,Status\n'+[999,50,60,65,67,70,80,90,999].map((w,i)=>'Push,2026-01-'+String(i+1).padStart(2,'0')+'T12:00:00Z,Test,5,'+w+',Done').join('\n');
+        const ss=buildData(csv).sessions,window={from:'2026-01-02',to:'2026-01-08'};
+        const full=exerciseTrend(ss,'Test','custom',window);
+        const even=exerciseTrend(ss,'Test','custom',{from:'2026-01-03',to:'2026-01-06'});
+        const two=exerciseTrend(ss,'Test','custom',{from:'2026-01-02',to:'2026-01-03'});
+        const one=exerciseTrend(ss,'Test','custom',{from:'2026-01-02',to:'2026-01-02'});
+        const empty=exerciseTrend(ss,'Test','custom',{from:'2026-02-01',to:'2026-02-28'});
         loadCSV(csv,'Zeitraumtest.csv');
         const mode=state.progressMode,range=state.range;
-        // Trotz drei Basiseinheiten ist der erste Tag der Historie nicht abgedeckt.
-        const shortened=csv.split('\n').filter((_,i)=>i!==1).join('\n');
-        loadCSV(shortened,'Unvollständige Historie.csv');
-        state.range='custom';state.progressMode='custom';state.from='2026-01-05';state.to='2026-01-08';
-        const incomplete=exerciseAssessment(filtered(),'Test');
-        return {even,sparse,boundary,incomplete,gap,strict,mode,range};
+        state.range='custom';state.progressMode='custom';state.from=window.from;state.to=window.to;
+        const assessment=exerciseAssessment(filtered(),'Test');
+        const amount=comparisonData();
+        state.to=state.from;const singleDay=comparisonData();
+        return {full,even,two,one,empty,assessment,amount,singleDay,mode,range};
       });
-      near(edgeCases.even.first,65*7/6);near(edgeCases.even.last,85*7/6);
-      near(edgeCases.even.pct,100*(85-65)/65);
-      assert.equal(edgeCases.even.count,8);assert.equal(edgeCases.even.after.at(-1).date,'2026-01-08');
-      assert.ok(Number.isFinite(edgeCases.sparse.pct));assert.equal(edgeCases.sparse.beforeCount,1);
-      assert.equal(edgeCases.boundary.before.length,3);assert.equal(edgeCases.boundary.after[0].date,'2026-01-04');
-      assert.equal(edgeCases.incomplete.status,'up');assert.equal(edgeCases.incomplete.confidence,'early');
-      assert.equal(edgeCases.incomplete.partialHistory,true);
-      assert.ok(Number.isFinite(edgeCases.incomplete.pct));
-      assert.equal(edgeCases.gap.fallback,true);assert.equal(edgeCases.gap.before[0].date,'2026-01-01');
-      near(edgeCases.gap.pct,40);assert.equal(edgeCases.strict.pct,undefined);
+      near(edgeCases.full.first,60*7/6);near(edgeCases.full.last,80*7/6);near(edgeCases.full.pct,100/3);
+      assert.equal(edgeCases.full.count,7);assert.equal(edgeCases.full.before[0].date,'2026-01-02');
+      assert.equal(edgeCases.full.after.at(-1).date,'2026-01-08');
+      near(edgeCases.even.first,62.5*7/6);near(edgeCases.even.last,68.5*7/6);
+      near(edgeCases.two.pct,20);assert.equal(edgeCases.two.beforeCount,1);
+      assert.equal(edgeCases.one.pct,undefined);assert.equal(edgeCases.one.count,1);
+      assert.equal(edgeCases.empty.pct,undefined);assert.equal(edgeCases.empty.count,0);
+      assert.equal(edgeCases.assessment.status,'up');assert.equal(edgeCases.assessment.confidence,'solid');
+      assert.equal(edgeCases.amount.firstFrom,'2026-01-02');assert.equal(edgeCases.amount.firstTo,'2026-01-04');
+      assert.equal(edgeCases.amount.lastFrom,'2026-01-06');assert.equal(edgeCases.amount.lastTo,'2026-01-08');
+      near(edgeCases.amount.first.volume,(50+60+65)*5);near(edgeCases.amount.last.volume,(70+80+90)*5);
+      assert.equal(edgeCases.singleDay.halfDays,0);
       assert.equal(edgeCases.mode,'recent');assert.equal(edgeCases.range,'all');
       assert.deepEqual(errors,[]);
       console.log(`OK: ${engineName}, ${width}px – Wochen, Datum, Median, Referenzdaten, Eingabefehler und Historie`);

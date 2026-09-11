@@ -31,7 +31,7 @@ const fixture = 'Name,StartTime,Exercise,Reps,Weight,IsWarmup,Status\n' +
         return {sets:data.sets.length,excluded:data.excludedExercises.sets,exercises:[...new Set(data.sets.map(s=>s.exercise))]};
       },fixture);
       assert.equal(exclusion.sets,6);assert.equal(exclusion.excluded,3);assert.deepEqual(exclusion.exercises,['Drücken, eng']);
-      for(const period of ['current','previous']) for(const key of ['sets','sessions','volume','perSession'])near(actual.comparison[period][key],reference[period][key]);
+      for(const period of ['first','last']) for(const key of ['sets','sessions','volume','perSession'])near(actual.comparison[period][key],reference[period][key]);
       assert.deepEqual(actual.muscles,reference.muscles);
       const progress=await page.evaluate(()=>Object.fromEntries([...new Set(DATA.sets.map(s=>s.exercise))].map(name=>[name,repsByWeight(exerciseSessions(DATA.sessions,name))])));
       for(const [name,rows] of Object.entries(reference.progress))assert.deepEqual(progress[name],rows);
@@ -169,7 +169,7 @@ const fixture = 'Name,StartTime,Exercise,Reps,Weight,IsWarmup,Status\n' +
       await page.locator('#tab-exercises').click();
       assert.match(await page.locator('#ex-insight').textContent(),/Keine Übungen/);
       await page.evaluate(()=>{state.range='all';render();});
-      assert.equal(await page.evaluate(()=>comparisonData().covered),false);
+      assert.deepEqual(await page.evaluate(()=>{const c=comparisonData();return [c.firstFrom,c.firstTo,c.lastFrom,c.lastTo];}),['2026-06-01','2026-06-03','2026-06-04','2026-06-06']);
       assert.equal(errors.length,0,errors.join('\n'));
       console.log(`OK: ${name}, ${width}px – Zahlen, sechs Ansichten, Hell/Dunkel, Filter, Import und Trends`);
       await context.close();
