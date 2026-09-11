@@ -214,6 +214,14 @@ main section { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); ga
 .legend .key-line { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
 .legend .key-rect { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
 #tt { position: fixed; z-index: 60; pointer-events: none; opacity: 0; transition: opacity .1s; background: var(--surface-1); border: 1px solid var(--axis); border-radius: 12px; padding: 12px 14px; font-size: 13px; max-width: calc(100vw - 24px); box-shadow: 0 8px 28px var(--hover-wash); }
+#tt.is-pinned { pointer-events: auto; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 14px 16px; border-color: var(--series-1); }
+#tt .tt-header { position: sticky; top: -14px; z-index: 1; display: flex; align-items: center; gap: 12px; background: var(--surface-1); margin: -8px -8px 6px 0; }
+#tt .tt-context { flex: 1; margin: 0; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .035em; overflow-wrap: anywhere; }
+#tt .tt-close { flex: none; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; font-size: 27px; line-height: 1; }
+#tt.is-pinned .tt-title { color: var(--text-primary); font-size: 14px; font-weight: 600; }
+#tt .tt-name { min-width: 0; overflow-wrap: anywhere; }
+#tt .tt-val { flex-shrink: 0; }
+svg rect[data-tt-selected]:not(.hit) { stroke: var(--text-primary); stroke-width: 2px; }
 #tt .tt-title { color: var(--text-secondary); font-size: 12px; margin-bottom: 7px; }
 #tt .tt-row { display: flex; align-items: baseline; gap: 8px; margin-top: 3px; }
 #tt .tt-key { width: 12px; height: 3px; border-radius: 2px; flex: none; transform: translateY(-3px); }
@@ -849,7 +857,7 @@ td .swatch { width: 9px; height: 9px; border-radius: 3px; display: inline-block;
   <p class="foot" id="foot"></p>
 </div>
 
-<div id="tt" role="status" aria-live="polite"></div>
+<div id="tt" role="tooltip" hidden></div>
 <div class="dropzone" id="dropzone">FitNotes-CSV hier ablegen</div>
 
 <script>
@@ -1107,30 +1115,91 @@ function barPath(x, y, w, h, r = 4) {
   return `M${x},${y + h}L${x},${y + r}Q${x},${y} ${x + r},${y}L${x + w - r},${y}Q${x + w},${y} ${x + w},${y + r}L${x + w},${y + h}Z`;
 }
 
-/* Tooltip */
-const tt = document.getElementById("tt");
-function ttShow(ev, title, rows) {
-  tt.textContent = "";
-  if (title) tt.appendChild(el("div", "tt-title", title));
-  for (const r of rows) {
-    const line = el("div", "tt-row");
-    if (r.color) { const k = el("span", "tt-key"); k.style.background = r.color; line.appendChild(k); }
-    line.appendChild(el("span", "tt-val", r.value));
-    if (r.name) line.appendChild(el("span", "tt-name", r.name));
-    tt.appendChild(line);
+/* Touch-Werte bleiben angeheftet; Maus und Tastatur behalten den Tooltip. */
+const tt=document.getElementById("tt");
+const ttContent=el("div","tt-content"),ttContext=el("div","tt-context"),ttHeader=el("div","tt-header");
+const ttClose=el("button","tt-close","×");ttClose.type="button";ttClose.setAttribute("aria-label","Diagrammwerte schließen");
+ttContent.setAttribute("aria-live","polite");ttContent.setAttribute("aria-atomic","true");
+ttHeader.append(ttContext,ttClose);tt.append(ttHeader,ttContent);tt.hidden=true;
+let ttPinned=false,ttSource=null,ttSvg=null,ttInput="mouse",ttDock="top";
+document.addEventListener("pointerdown",e=>{ttInput=e.pointerType||"mouse";},{capture:true,passive:true});
+document.addEventListener("keydown",()=>{ttInput="keyboard";},true);
+function ttShow(ev,title,rows) {
+  const source=ev.currentTarget||ev.target,svg=source?.closest?.("svg");
+  if(!svg)return;
+  if(ttSvg && ttSvg!==svg)ttSvg.dispatchEvent(new Event("tooltipclear"));
+  if(ttSource && ttSource!==source) {ttSource.removeAttribute("data-tt-selected");ttSource.removeAttribute("aria-describedby");}
+  const wasPinned=ttPinned;
+  ttPinned=["touch","pen"].includes(ev.pointerType||ttInput);
+  ttSource=source;ttSvg=svg;source.setAttribute("data-tt-selected","true");source.setAttribute("aria-describedby","tt");
+  tt.classList.toggle("is-pinned",ttPinned);tt.setAttribute("role",ttPinned?"region":"tooltip");
+  tt.setAttribute("aria-label",ttPinned?"Ausgewählte Diagrammwerte":"Diagrammwerte");
+  ttHeader.hidden=ttClose.hidden=!ttPinned;
+  ttContext.textContent=svg.getAttribute("aria-label")||"Diagrammwerte";
+  ttContent.textContent="";
+  if(title)ttContent.appendChild(el("div","tt-title",title));
+  for(const r of rows) {
+    const line=el("div","tt-row");
+    if(r.color){const key=el("span","tt-key");key.style.background=r.color;line.appendChild(key);}
+    line.appendChild(el("span","tt-val",r.value));
+    if(r.name)line.appendChild(el("span","tt-name",r.name));
+    ttContent.appendChild(line);
   }
-  tt.style.opacity = "1";
-  ttMove(ev);
+  tt.hidden=false;tt.style.opacity="1";
+  if(ttPinned) {
+    if(!wasPinned)ttDock="top";
+    ttPlacePinned(ev);
+  } else {tt.style.width="";tt.style.maxHeight="";ttMove(ev);}
+}
+function ttPlacePinned(ev) {
+  if(!ttPinned || tt.hidden)return;
+  const viewport=window.visualViewport,wrap=getComputedStyle(document.querySelector(".wrap"));
+  const originX=viewport?.offsetLeft||0,originY=viewport?.offsetTop||0;
+  const width=viewport?.width||innerWidth,height=viewport?.height||innerHeight;
+  const insetLeft=Math.max(12,parseFloat(wrap.paddingLeft)||0),insetRight=Math.max(12,parseFloat(wrap.paddingRight)||0);
+  let top=originY+Math.max(12,parseFloat(wrap.paddingTop)||0),bottom=originY+height-12;
+  const tabs=document.getElementById("tabs"),nav=tabs.getBoundingClientRect(),position=getComputedStyle(tabs).position;
+  if(position==="fixed")bottom=Math.min(bottom,nav.top-10);
+  else if(position==="sticky" && nav.top<=top)top=Math.max(top,nav.bottom+10);
+  const panelWidth=Math.min(480,Math.max(100,width-insetLeft-insetRight));
+  tt.style.width=panelWidth+"px";
+  tt.style.left=(originX+insetLeft+(width-insetLeft-insetRight-panelWidth)/2)+"px";
+  tt.style.maxHeight=Math.max(44,Math.min(360,(bottom-top)*.45))+"px";
+  const panelHeight=tt.getBoundingClientRect().height;
+  let y=ttDock==="top"?top:bottom-panelHeight;
+  // Berührt der Finger den oberen Bildschirmrand, liegt die Karte unten über der Navigation.
+  if(ev && Number.isFinite(ev.clientY) && ev.clientY>=y-24 && ev.clientY<=y+panelHeight+24) {
+    const otherY=ttDock==="top"?bottom-panelHeight:top;
+    if(Math.abs(ev.clientY-otherY-panelHeight/2)>Math.abs(ev.clientY-y-panelHeight/2)+12) {
+      ttDock=ttDock==="top"?"bottom":"top";y=otherY;
+    }
+  }
+  tt.style.top=Math.max(top,y)+"px";
 }
 function ttMove(ev) {
-  const r = tt.getBoundingClientRect();
-  let x = ev.clientX + 14, y = ev.clientY + 16;
-  if (x + r.width > innerWidth - 8) x = ev.clientX - r.width - 14;
-  if (y + r.height > innerHeight - 8) y = ev.clientY - r.height - 16;
-  tt.style.left = Math.max(8, x) + "px"; tt.style.top = Math.max(8, y) + "px";
+  if(ttPinned){ttPlacePinned(ev);return;}
+  if(tt.hidden || !Number.isFinite(ev.clientX))return;
+  const r=tt.getBoundingClientRect();let x=ev.clientX+14,y=ev.clientY+16;
+  if(x+r.width>innerWidth-8)x=ev.clientX-r.width-14;
+  if(y+r.height>innerHeight-8)y=ev.clientY-r.height-16;
+  tt.style.left=Math.max(8,x)+"px";tt.style.top=Math.max(8,y)+"px";
 }
-function ttHide() { tt.style.opacity = "0"; }
-addEventListener("scroll", ttHide, true);
+function ttHide(force=false) {
+  if(ttPinned && force!==true)return;
+  ttSvg?.dispatchEvent(new Event("tooltipclear"));
+  ttSource?.removeAttribute("data-tt-selected");ttSource?.removeAttribute("aria-describedby");
+  ttSource=ttSvg=null;ttPinned=false;tt.style.opacity="0";tt.hidden=true;tt.classList.remove("is-pinned");
+}
+function ttLeave(ev) {if(ev?.currentTarget?.closest?.("svg")===ttSvg)ttHide();}
+function ttDismiss() {
+  if(tt.contains(document.activeElement))ttSource?.focus({preventScroll:true});
+  ttHide(true);
+}
+ttClose.addEventListener("click",ttDismiss);
+addEventListener("scroll",()=>{if(ttPinned)ttPlacePinned();else ttHide();}, {capture:true,passive:true});
+addEventListener("resize",()=>{if(ttPinned)ttPlacePinned();else ttHide();});
+window.visualViewport?.addEventListener("resize",()=>ttPlacePinned());
+window.visualViewport?.addEventListener("scroll",()=>ttPlacePinned());
 
 /* Charts neu zeichnen, wenn sich die Breite ändert */
 const drawers = new WeakMap();
@@ -1149,12 +1218,14 @@ const ro = new ResizeObserver(entries => {
   for (const e of entries) { const fn = drawers.get(e.target); if (fn && e.contentRect.width > 0) fn(e.contentRect.width); }
 });
 function mount(host, draw) {
+  if(ttSvg && host.contains(ttSvg))ttHide(true);
   host.textContent = "";
   let previousWidth = -1;
   const redraw = w => {
     if (Math.abs(w - previousWidth) < 1) return;
     previousWidth = w;
     const open = host.querySelector("details")?.open;
+    if(ttSvg && host.contains(ttSvg))ttHide(true);
     draw(w); appendChartTable(host);
     if (open && host.querySelector("details")) host.querySelector("details").open = true;
     host.querySelectorAll("svg").forEach(svg => svg.setAttribute("aria-label", host.closest(".card")?.querySelector("h2")?.textContent || "Trainingsverlauf"));
@@ -1194,6 +1265,7 @@ function columnChart(host, opts) {
     const maxIdx = data.reduce((b, d, i) => d.value > data[b].value ? i : b, 0);
     const lastIdx = data.length - 1;
     const bars = [];
+    svg.addEventListener("tooltipclear",()=>bars.forEach(b=>b.classList.remove("dim")));
     data.forEach((d, i) => {
       const cx = m.l + band * i + band / 2, h = sc.top > 0 ? (d.value / sc.top) * ih : 0;
       const p = sv("path", { class: "bar", d: barPath(cx - bw / 2, y(d.value), bw, Math.max(h, d.value > 0 ? 1.5 : 0), compact ? 3 : 4), fill: color });
@@ -1226,14 +1298,14 @@ function columnChart(host, opts) {
         bars.forEach((b, k) => b.classList.toggle("dim", k !== i));
         ttShow(ev, (tipTitle ? tipTitle(d) : d.full || d.label), [{ value: fmt(d.value), name: opts.unit || "", color }].concat(d.extra || []));
       };
-      const off = () => { bars.forEach(b => b.classList.remove("dim")); ttHide(); };
+      const off=ttLeave;
       hit.addEventListener("pointerenter", on);
       hit.addEventListener("click", on);
       hit.addEventListener("pointermove", ttMove);
       hit.addEventListener("pointerleave", off);
       hit.addEventListener("focus", () => {
         const r = hit.getBoundingClientRect();
-        on({ clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 });
+        on({ currentTarget:hit, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 });
       });
       hit.addEventListener("blur", off);
       svg.appendChild(hit);
@@ -1276,6 +1348,7 @@ function stackedColumnChart(host, opts) {
     svg.appendChild(sv("line", { class: "axisline", x1: m.l, x2: m.l + iw, y1: y(0), y2: y(0) }));
 
     const groups = [];
+    svg.addEventListener("tooltipclear",()=>groups.forEach(g=>g.setAttribute("opacity",1)));
     data.forEach((d, i) => {
       const cx = m.l + band * i + band / 2;
       const g = sv("g", {}); groups.push(g);
@@ -1313,12 +1386,12 @@ function stackedColumnChart(host, opts) {
         rows.push({ value: fmt(totals[i]), name: "gesamt" });
         ttShow(ev, d.full || d.label, rows);
       };
-      const off = () => { groups.forEach(g => g.setAttribute("opacity", 1)); ttHide(); };
+      const off=ttLeave;
       hit.addEventListener("pointerenter", on);
       hit.addEventListener("click", on);
       hit.addEventListener("pointermove", ttMove);
       hit.addEventListener("pointerleave", off);
-      hit.addEventListener("focus", () => { const r = hit.getBoundingClientRect(); on({ clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 }); });
+      hit.addEventListener("focus", () => { const r = hit.getBoundingClientRect(); on({ currentTarget:hit, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 }); });
       hit.addEventListener("blur", off);
       svg.appendChild(hit);
     });
@@ -1481,15 +1554,16 @@ function lineChart(host, opts) {
     };
     overlay.addEventListener("click", ev => { curIdx = nearest(ev); showAt(curIdx, ev); });
     overlay.addEventListener("pointermove", ev => { curIdx = nearest(ev); showAt(curIdx, ev); ttMove(ev); });
-    overlay.addEventListener("pointerleave", () => { cross.setAttribute("opacity", 0); dots.forEach(d => d.setAttribute("opacity", 0)); ttHide(); });
+    svg.addEventListener("tooltipclear",()=>{cross.setAttribute("opacity",0);dots.forEach(d=>d.setAttribute("opacity",0));});
+    overlay.addEventListener("pointerleave",ttLeave);
     overlay.addEventListener("keydown", ev => {
       if (ev.key !== "ArrowLeft" && ev.key !== "ArrowRight") return;
       ev.preventDefault();
       curIdx = Math.max(0, Math.min(ts.length - 1, curIdx + (ev.key === "ArrowRight" ? 1 : -1)));
       const box = svg.getBoundingClientRect();
-      showAt(curIdx, { clientX: box.left + (X(ts[curIdx]) / W) * box.width, clientY: box.top + box.height / 2 });
+      showAt(curIdx, { currentTarget:overlay, clientX: box.left + (X(ts[curIdx]) / W) * box.width, clientY: box.top + box.height / 2 });
     });
-    overlay.addEventListener("blur", () => { cross.setAttribute("opacity", 0); dots.forEach(d => d.setAttribute("opacity", 0)); ttHide(); });
+    overlay.addEventListener("blur",ttLeave);
     svg.appendChild(overlay);
     host.appendChild(svg);
   });
@@ -1533,9 +1607,9 @@ function hbarChart(host, opts) {
       hit.addEventListener("pointerenter", on);
       hit.addEventListener("click", on);
       hit.addEventListener("pointermove", ttMove);
-      hit.addEventListener("pointerleave", ttHide);
-      hit.addEventListener("focus", () => { const r = hit.getBoundingClientRect(); on({ clientX: r.left + 120, clientY: r.top + r.height / 2 }); });
-      hit.addEventListener("blur", ttHide);
+      hit.addEventListener("pointerleave", ttLeave);
+      hit.addEventListener("focus", () => { const r = hit.getBoundingClientRect(); on({ currentTarget:hit, clientX: r.left + 120, clientY: r.top + r.height / 2 }); });
+      hit.addEventListener("blur", ttLeave);
       svg.appendChild(hit);
     });
     host.appendChild(svg);
@@ -1603,9 +1677,9 @@ function calendarChart(host, days, from, to) {
         rect.addEventListener("pointerenter", on);
         rect.addEventListener("click", on);
         rect.addEventListener("pointermove", ttMove);
-        rect.addEventListener("pointerleave", ttHide);
-        rect.addEventListener("focus", () => { const q2 = rect.getBoundingClientRect(); on({ clientX: q2.left, clientY: q2.top }); });
-        rect.addEventListener("blur", ttHide);
+        rect.addEventListener("pointerleave", ttLeave);
+        rect.addEventListener("focus", () => { const q2 = rect.getBoundingClientRect(); on({ currentTarget:rect, clientX: q2.left, clientY: q2.top }); });
+        rect.addEventListener("blur", ttLeave);
       }
       svg.appendChild(rect);
     }
@@ -1717,18 +1791,24 @@ function sparkline(host, pts, opts) {
     const dot = sv("circle", { r: 4, fill: "var(--series-1)", stroke: "var(--surface-1)", "stroke-width": 2, opacity: 0 });
     svg.appendChild(dot);
     const ov = sv("rect", { class: "hit", x: m.l, y: m.t, width: iw, height: ih, tabindex: 0 });
-    ov.addEventListener("pointermove", ev => {
-      const b = svg.getBoundingClientRect();
-      const px = (ev.clientX - b.left) * (W / b.width);
-      let bi = 0, bd = Infinity;
-      pts.forEach((p, i) => { const d = Math.abs(X(i) - px); if (d < bd) { bd = d; bi = i; } });
-      const p = pts[bi];
-      dot.setAttribute("cx", X(bi)); dot.setAttribute("cy", Y(p.y)); dot.setAttribute("opacity", 1);
-      ttShow(ev, p.label, [{ value: fmt(p.y), name: opts.unit || "", color: "var(--series-1)" }].concat(p.extra || []));
-      ttMove(ev);
+    let curIdx=pts.length-1;
+    const showAt=(i,ev)=>{
+      curIdx=i;const p=pts[i];dot.setAttribute("cx",X(i));dot.setAttribute("cy",Y(p.y));dot.setAttribute("opacity",1);
+      ttShow(ev,p.label,[{value:fmt(p.y),name:opts.unit||"",color:"var(--series-1)"}].concat(p.extra||[]));
+    };
+    const on=ev=>{
+      const b=svg.getBoundingClientRect(),px=(ev.clientX-b.left)*(W/b.width);
+      let bi=0,bd=Infinity;pts.forEach((p,i)=>{const distance=Math.abs(X(i)-px);if(distance<bd){bd=distance;bi=i;}});
+      showAt(bi,ev);
+    };
+    const showFocused=()=>{const b=svg.getBoundingClientRect();showAt(curIdx,{currentTarget:ov,clientX:b.left+X(curIdx)/W*b.width,clientY:b.top+b.height/2});};
+    ov.addEventListener("pointermove",on);ov.addEventListener("click",on);ov.addEventListener("focus",showFocused);
+    ov.addEventListener("keydown",ev=>{
+      if(!["ArrowLeft","ArrowRight"].includes(ev.key))return;
+      ev.preventDefault();curIdx=Math.max(0,Math.min(pts.length-1,curIdx+(ev.key==="ArrowRight"?1:-1)));showFocused();
     });
-    ov.addEventListener("pointerleave", () => { dot.setAttribute("opacity", 0); ttHide(); });
-    ov.addEventListener("blur", () => { dot.setAttribute("opacity", 0); ttHide(); });
+    svg.addEventListener("tooltipclear",()=>dot.setAttribute("opacity",0));
+    ov.addEventListener("pointerleave",ttLeave);ov.addEventListener("blur",ttLeave);
     svg.appendChild(ov);
     host.appendChild(svg);
   });
@@ -1766,6 +1846,7 @@ function exerciseSessions(sessions, name) {
 
 /* ══════════════ Rendering ══════════════ */
 function render() {
+  ttHide(true);
   const ss = filtered();
   const sets = setsOf(ss);
   renderFilters();
@@ -1787,6 +1868,7 @@ function render() {
 /* Diagramm-/Tabellenansicht nach jedem Render neu anwenden — sonst taucht
    eine frisch erzeugte Legende auch in der Tabellenansicht wieder auf. */
 function applyTableModes() {
+  ttHide(true);
   for (const k of Object.keys(state.tbl)) {
     const isTable = state.tbl[k] === "table";
     const chart = document.getElementById(k + "-chart");
@@ -2460,7 +2542,7 @@ function renderSessions(ss) {
 document.getElementById("tabs").addEventListener("click", ev => {
   const b = ev.target.closest("button[data-view]"); if (!b) return;
   state.view = b.dataset.view;
-  ttHide(); closeCombo();
+  ttHide(true); closeCombo();
   document.querySelectorAll("#tabs button").forEach(x => { x.setAttribute("aria-selected", String(x === b)); x.tabIndex = x === b ? 0 : -1; });
   document.querySelectorAll("main section").forEach(s => s.hidden = s.dataset.view !== state.view);
   render();
@@ -2960,8 +3042,8 @@ document.getElementById("tabs").addEventListener("keydown",e=>{
   e.preventDefault();const next=e.key==="Home"?0:e.key==="End"?buttons.length-1:(i+(["ArrowRight","ArrowDown"].includes(e.key)?1:-1)+buttons.length)%buttons.length;
   buttons[next].click();buttons[next].focus({preventScroll:true});
 });
-document.addEventListener("keydown",e=>{if(e.key==="Escape")ttHide();});
-document.addEventListener("pointerdown",e=>{if(!e.target.closest("svg"))ttHide();},{passive:true});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")ttDismiss();});
+document.addEventListener("pointerdown",e=>{if(!ttPinned && !e.target.closest("svg, #tt"))ttHide();},{passive:true});
 
 render();
 </script>
